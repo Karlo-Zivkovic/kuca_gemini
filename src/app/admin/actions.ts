@@ -4,9 +4,9 @@ import { redirect } from "next/navigation";
 import { updateTag } from "next/cache";
 import { checkPassword, createSession, destroySession, isAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { TAG_BOOKINGS, TAG_SEASONS } from "@/lib/data";
-import { isIsoDate, rangesOverlap } from "@/lib/dates";
-import type { Booking, BookingDetails, Season } from "@/lib/types";
+import { TAG_BOOKINGS, TAG_PRICES } from "@/lib/data";
+import { fromIso, isIsoDate, nightsBetween, rangesOverlap, toIso } from "@/lib/dates";
+import type { Booking, BookingDetails, DayPrice } from "@/lib/types";
 
 /* ---------------------------------- Login ---------------------------------- */
 
@@ -85,36 +85,37 @@ export async function deleteBooking(id: string): Promise<BookingsResult> {
   return { ok: true, bookings: await db.listBookings() };
 }
 
-/* --------------------------------- Seasons --------------------------------- */
+/* ---------------------------------- Prices --------------------------------- */
 
-export type SeasonsResult = { ok: boolean; error?: string; seasons: Season[] };
+export type PricesResult = { ok: boolean; error?: string; prices: DayPrice[] };
 
-export async function saveSeason(input: {
-  id?: string;
-  startsOn: string;
-  endsOn: string;
-  priceEur: number | null;
-  minNights: number;
-}): Promise<SeasonsResult> {
-  await guard();
-  const { startsOn, endsOn, priceEur, minNights } = input;
-  if (!isIsoDate(startsOn) || !isIsoDate(endsOn) || endsOn < startsOn) {
-    return { ok: false, error: "Neispravni datumi.", seasons: await db.listSeasons() };
-  }
-  if (priceEur !== null && (!Number.isInteger(priceEur) || priceEur <= 0 || priceEur > 100_000)) {
-    return { ok: false, error: "Neispravna cijena.", seasons: await db.listSeasons() };
-  }
-  if (!Number.isInteger(minNights) || minNights < 1 || minNights > 60) {
-    return { ok: false, error: "Minimalan broj noćenja mora biti između 1 i 60.", seasons: await db.listSeasons() };
-  }
-  await db.saveSeason({ id: input.id, startsOn, endsOn, priceEur, minNights });
-  updateTag(TAG_SEASONS);
-  return { ok: true, seasons: await db.listSeasons() };
+/** Every day from `from` to `to`, both inclusive (max ~2 years). */
+function daysBetween(from: string, to: string): string[] | null {
+  if (!isIsoDate(from) || !isIsoDate(to) || to < from || nightsBetween(from, to) > 800) return null;
+  const days: string[] = [];
+  for (let d = fromIso(from); toIso(d) <= to; d.setDate(d.getDate() + 1)) days.push(toIso(d));
+  return days;
 }
 
-export async function deleteSeason(id: string): Promise<SeasonsResult> {
+/** Set one price per night on every day from `from` to `to`. */
+export async function setPrices(from: string, to: string, priceEur: number): Promise<PricesResult> {
   await guard();
-  await db.deleteSeason(id);
-  updateTag(TAG_SEASONS);
-  return { ok: true, seasons: await db.listSeasons() };
+  const days = daysBetween(from, to);
+  if (!days) return { ok: false, error: "Neispravni datumi.", prices: await db.listDayPrices() };
+  if (!Number.isInteger(priceEur) || priceEur <= 0 || priceEur > 100_000) {
+    return { ok: false, error: "Upišite cijenu u eurima (cijeli broj).", prices: await db.listDayPrices() };
+  }
+  await db.setDayPrices(days, priceEur);
+  updateTag(TAG_PRICES);
+  return { ok: true, prices: await db.listDayPrices() };
+}
+
+/** Remove prices from every day from `from` to `to`: those days become "price on request". */
+export async function clearPrices(from: string, to: string): Promise<PricesResult> {
+  await guard();
+  const days = daysBetween(from, to);
+  if (!days) return { ok: false, error: "Neispravni datumi.", prices: await db.listDayPrices() };
+  await db.clearDayPrices(days);
+  updateTag(TAG_PRICES);
+  return { ok: true, prices: await db.listDayPrices() };
 }

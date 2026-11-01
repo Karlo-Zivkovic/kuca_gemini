@@ -25,12 +25,11 @@ export const emptyDetails: BookingDetails = {
   note: "",
 };
 
-export type Season = {
-  id: string;
-  startsOn: string;
-  endsOn: string; // inclusive
-  priceEur: number | null; // null = "price on request"
-  minNights: number;
+/**
+ * Price for one night (the night starting on `day`), for the whole villa.
+ * Days without a row are "price on request".
+ */
+export type DayPrice = {
+  day: string; // ISO date
+  priceEur: number;
 };
-
-export type SeasonInput = Omit<Season, "id"> & { id?: string };

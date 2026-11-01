@@ -21,15 +21,11 @@ alter table bookings add constraint bookings_guests_ok check (guests is null or 
 
 create index if not exists bookings_check_in_idx on bookings (check_in);
 
-create table if not exists seasons (
-  id          uuid primary key default gen_random_uuid(),
-  starts_on   date not null,
-  ends_on     date not null,
-  price_eur   integer,               -- null = "price on request"
-  min_nights  integer not null default 7,
-  created_at  timestamptz not null default now(),
-  constraint seasons_dates_ok check (ends_on >= starts_on),
-  constraint seasons_price_ok check (price_eur is null or price_eur > 0),
-  constraint seasons_min_ok check (min_nights between 1 and 60)
+-- Price per night for the whole villa; days without a row are "price on request".
+create table if not exists day_prices (
+  day         date primary key,
+  price_eur   integer not null,
+  updated_at  timestamptz not null default now(),
+  constraint day_prices_price_ok check (price_eur > 0 and price_eur <= 100000)
 );
 

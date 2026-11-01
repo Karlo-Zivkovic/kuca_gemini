@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { ExternalLink } from "lucide-react";
 import { galleryPhotos, heroPhoto, photoSrc, site } from "@/lib/config";
-import { getPublicAvailability, getPublicSeasons } from "@/lib/data";
+import { getPublicAvailability, getPublicDayPrices } from "@/lib/data";
 import { getDict, hasLocale, localeTag, type Dict, type Locale } from "@/lib/i18n";
 import { BookingProvider } from "@/components/site/booking-context";
 import { BookingCalendar } from "@/components/site/booking-calendar";
@@ -94,13 +94,13 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
   );
 }
 
-/** Cached server data (bookings + seasons), revalidated when mom edits them. */
+/** Cached server data (bookings + prices), refreshed when mom edits them. */
 async function Availability({ t, lang }: { t: Dict; lang: Locale }) {
-  const [booked, seasons] = await Promise.all([getPublicAvailability(), getPublicSeasons()]);
+  const [booked, prices] = await Promise.all([getPublicAvailability(), getPublicDayPrices()]);
   return (
-    <div className="grid gap-8 lg:grid-cols-[3fr_2fr]">
-      <BookingCalendar booked={booked} seasons={seasons} t={t.availability} lang={lang} />
-      <Prices seasons={seasons} t={t} lang={lang} />
+    <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
+      <BookingCalendar booked={booked} prices={prices} t={t.availability} lang={lang} />
+      <Prices t={t} />
     </div>
   );
 }

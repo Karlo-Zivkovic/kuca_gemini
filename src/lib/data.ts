@@ -3,7 +3,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { db } from "./db";
 
 export const TAG_BOOKINGS = "bookings";
-export const TAG_SEASONS = "seasons";
+export const TAG_PRICES = "prices";
 
 export type PublicRange = { from: string; to: string };
 
@@ -16,9 +16,10 @@ export async function getPublicAvailability(): Promise<PublicRange[]> {
   return bookings.map((b) => ({ from: b.checkIn, to: b.checkOut }));
 }
 
-export async function getPublicSeasons() {
+/** Per-night prices for the public calendar. Days without a price are "on request". */
+export async function getPublicDayPrices() {
   "use cache";
-  cacheTag(TAG_SEASONS);
+  cacheTag(TAG_PRICES);
   cacheLife("minutes");
-  return db.listSeasons();
+  return db.listDayPrices();
 }

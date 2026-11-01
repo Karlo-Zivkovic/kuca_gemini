@@ -19,6 +19,7 @@ export const site = {
   email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || "fanica.zivkovic@gmail.com",
   checkIn: "16:00",
   checkOut: "10:00",
+  minNights: 5, // minimum stay, all year
   maxGuests: 14,
   bedrooms: 8,
   bathrooms: 4,

@@ -14,6 +14,6 @@ export default function AdminPage() {
 
 async function AdminGate() {
   if (!(await isAdmin())) redirect("/admin/login");
-  const [bookings, seasons] = await Promise.all([db.listBookings(), db.listSeasons()]);
-  return <AdminApp initialBookings={bookings} initialSeasons={seasons} />;
+  const [bookings, prices] = await Promise.all([db.listBookings(), db.listDayPrices()]);
+  return <AdminApp initialBookings={bookings} initialPrices={prices} />;
 }

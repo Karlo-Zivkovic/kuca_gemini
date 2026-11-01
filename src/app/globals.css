@@ -78,6 +78,36 @@ body {
   color: var(--color-muted);
 }
 
+/* Calendars that show a price under the date: taller, rounded-square cells. */
+.rdp-root.vg-calendar.vg-priced {
+  --rdp-day-height: 3.4rem;
+  --rdp-day-width: 2.85rem;
+  --rdp-day_button-height: 3.2rem;
+  --rdp-day_button-width: 2.65rem;
+  --rdp-day_button-border-radius: 0.75rem;
+  --rdp-months-gap: 1.5rem;
+}
+.vg-priced .rdp-day_button {
+  flex-direction: column;
+}
+.vg-price {
+  font-size: 0.66rem;
+  font-weight: 500;
+  color: var(--color-olive);
+  letter-spacing: -0.01em;
+}
+.vg-priced .rdp-selected .vg-price,
+.vg-priced .rdp-range_start .vg-price,
+.vg-priced .rdp-range_end .vg-price {
+  color: inherit;
+  opacity: 0.85;
+}
+
+/* Admin price calendar: days that have a price get a light tint. */
+.vg-priced-day:not(.rdp-selected) .rdp-day_button {
+  background: color-mix(in srgb, var(--color-olive) 12%, transparent);
+}
+
 /* Booked nights: struck through on a terracotta tint. */
 .vg-calendar .vg-booked:not(.rdp-range_start):not(.rdp-range_end) .rdp-day_button {
   background: color-mix(in srgb, var(--color-terracotta) 14%, transparent);
