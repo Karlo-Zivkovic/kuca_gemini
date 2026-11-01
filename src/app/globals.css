@@ -86,14 +86,6 @@ body {
   cursor: not-allowed;
 }
 
-/* Admin: booked nights are tappable (to manage the booking). */
-.vg-admin .vg-booked:not(.rdp-range_start):not(.rdp-range_end) .rdp-day_button {
-  background: var(--color-terracotta);
-  color: #fff;
-  text-decoration: none;
-  cursor: pointer;
-}
-
 .vg-calendar .vg-past .rdp-day_button {
   opacity: 0.35;
   text-decoration: none;

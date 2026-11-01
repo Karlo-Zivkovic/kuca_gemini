@@ -15,12 +15,13 @@ import postgres from "postgres";
  * another guest's check-in day.
  */
 
-import type { Booking, Season, SeasonInput } from "./types";
-export type { Booking, Season, SeasonInput };
+import { emptyDetails, type Booking, type BookingDetails, type Season, type SeasonInput } from "./types";
+export type { Booking, BookingDetails, Season, SeasonInput };
 
 interface Store {
   listBookings(): Promise<Booking[]>;
   addBooking(b: Omit<Booking, "id">): Promise<void>;
+  updateBookingDetails(id: string, d: BookingDetails): Promise<void>;
   deleteBooking(id: string): Promise<void>;
   listSeasons(): Promise<Season[]>;
   saveSeason(s: SeasonInput): Promise<void>;
@@ -38,15 +39,44 @@ function postgresStore(url: string): Store {
 
   return {
     async listBookings() {
-      const rows = await sql<{ id: string; check_in: string; check_out: string; note: string | null }[]>`
+      const rows = await sql<
+        {
+          id: string;
+          check_in: string;
+          check_out: string;
+          note: string | null;
+          guest_name: string | null;
+          guest_country: string | null;
+          source: string | null;
+          guests: number | null;
+          phone: string | null;
+        }[]
+      >`
         select id, to_char(check_in, 'YYYY-MM-DD') as check_in,
-               to_char(check_out, 'YYYY-MM-DD') as check_out, note
+               to_char(check_out, 'YYYY-MM-DD') as check_out,
+               note, guest_name, guest_country, source, guests, phone
         from bookings order by check_in`;
-      return rows.map((r) => ({ id: r.id, checkIn: r.check_in, checkOut: r.check_out, note: r.note ?? "" }));
+      return rows.map((r) => ({
+        id: r.id,
+        checkIn: r.check_in,
+        checkOut: r.check_out,
+        note: r.note ?? "",
+        guestName: r.guest_name ?? "",
+        guestCountry: r.guest_country ?? "",
+        source: r.source ?? "",
+        guests: r.guests,
+        phone: r.phone ?? "",
+      }));
     },
     async addBooking(b) {
-      await sql`insert into bookings (check_in, check_out, note)
-                values (${b.checkIn}, ${b.checkOut}, ${b.note})`;
+      await sql`insert into bookings (check_in, check_out, note, guest_name, guest_country, source, guests, phone)
+                values (${b.checkIn}, ${b.checkOut}, ${b.note}, ${b.guestName}, ${b.guestCountry},
+                        ${b.source}, ${b.guests}, ${b.phone})`;
+    },
+    async updateBookingDetails(id, d) {
+      await sql`update bookings set note = ${d.note}, guest_name = ${d.guestName},
+                guest_country = ${d.guestCountry}, source = ${d.source}, guests = ${d.guests}, phone = ${d.phone}
+                where id = ${id}`;
     },
     async deleteBooking(id) {
       await sql`delete from bookings where id = ${id}`;
@@ -114,11 +144,17 @@ function fileStore(): Store {
 
   return {
     async listBookings() {
-      return (await load()).bookings.sort(byDate((b) => b.checkIn));
+      // Older dev files have bookings without the guest fields: fill in defaults.
+      return (await load()).bookings.map((b) => ({ ...emptyDetails, ...b })).sort(byDate((b) => b.checkIn));
     },
     async addBooking(b) {
       const data = await load();
       data.bookings.push({ id: randomUUID(), ...b });
+      await save(data);
+    },
+    async updateBookingDetails(id, d) {
+      const data = await load();
+      data.bookings = data.bookings.map((b) => (b.id === id ? { ...b, ...d } : b));
       await save(data);
     },
     async deleteBooking(id) {

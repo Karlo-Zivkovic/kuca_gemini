@@ -10,6 +10,15 @@ create table if not exists bookings (
   constraint bookings_dates_ok check (check_out > check_in)
 );
 
+-- Optional guest details (see db/migrations/001_booking_guest_details.sql).
+alter table bookings add column if not exists guest_name    text    not null default '';
+alter table bookings add column if not exists guest_country text    not null default '';
+alter table bookings add column if not exists source        text    not null default '';
+alter table bookings add column if not exists guests        integer;
+alter table bookings add column if not exists phone         text    not null default '';
+alter table bookings drop constraint if exists bookings_guests_ok;
+alter table bookings add constraint bookings_guests_ok check (guests is null or guests between 1 and 50);
+
 create index if not exists bookings_check_in_idx on bookings (check_in);
 
 create table if not exists seasons (

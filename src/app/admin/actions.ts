@@ -6,7 +6,7 @@ import { checkPassword, createSession, destroySession, isAdmin } from "@/lib/aut
 import { db } from "@/lib/db";
 import { TAG_BOOKINGS, TAG_SEASONS } from "@/lib/data";
 import { isIsoDate, rangesOverlap } from "@/lib/dates";
-import type { Booking, Season } from "@/lib/types";
+import type { Booking, BookingDetails, Season } from "@/lib/types";
 
 /* ---------------------------------- Login ---------------------------------- */
 
@@ -33,7 +33,25 @@ async function guard() {
 
 export type BookingsResult = { ok: boolean; error?: string; bookings: Booking[] };
 
-export async function addBooking(checkIn: string, checkOut: string, note: string): Promise<BookingsResult> {
+/** Trim and cap the optional guest fields; anything invalid becomes empty. */
+function cleanDetails(d: Partial<BookingDetails>): BookingDetails {
+  const text = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+  const guests = Number(d.guests);
+  return {
+    guestName: text(d.guestName, 100),
+    guestCountry: text(d.guestCountry, 60),
+    source: text(d.source, 40),
+    guests: Number.isInteger(guests) && guests >= 1 && guests <= 50 ? guests : null,
+    phone: text(d.phone, 40),
+    note: text(d.note, 500),
+  };
+}
+
+export async function addBooking(
+  checkIn: string,
+  checkOut: string,
+  details: Partial<BookingDetails> = {},
+): Promise<BookingsResult> {
   await guard();
   if (!isIsoDate(checkIn) || !isIsoDate(checkOut) || checkOut <= checkIn) {
     return { ok: false, error: "Neispravni datumi.", bookings: await db.listBookings() };
@@ -47,8 +65,16 @@ export async function addBooking(checkIn: string, checkOut: string, note: string
       bookings: existing,
     };
   }
-  await db.addBooking({ checkIn, checkOut, note: note.trim().slice(0, 200) });
+  await db.addBooking({ checkIn, checkOut, ...cleanDetails(details) });
   updateTag(TAG_BOOKINGS);
+  return { ok: true, bookings: await db.listBookings() };
+}
+
+/** Edit the optional guest details of a booking (dates stay as they are). */
+export async function updateBookingDetails(id: string, details: Partial<BookingDetails>): Promise<BookingsResult> {
+  await guard();
+  await db.updateBookingDetails(id, cleanDetails(details));
+  // Guest details are never shown publicly, so the public calendar cache stays valid.
   return { ok: true, bookings: await db.listBookings() };
 }
 
