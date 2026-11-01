@@ -27,28 +27,28 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
         <Facts t={t.facts} />
         <About t={t} />
 
-        <section id="gallery" className="bg-paper py-20 sm:py-28">
+        <section id="gallery" className="bg-paper py-14 sm:py-18">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <SectionHeading kicker={t.gallery.kicker} title={t.gallery.title} />
             <Gallery photos={galleryPhotos} t={t.gallery} />
           </div>
         </section>
 
-        <Reviews t={t.reviews} />
+        <Reviews t={t.reviews} lang={lang} />
 
-        <section id="availability" className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28">
+        <section id="availability" className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-18">
           <SectionHeading kicker={t.availability.kicker} title={t.availability.title}>
             {t.availability.subtitle}
           </SectionHeading>
           <Availability t={t} lang={lang} />
         </section>
 
-        <section id="location" className="bg-paper py-20 sm:py-28">
+        <section id="location" className="bg-paper py-14 sm:py-18">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <SectionHeading kicker={t.location.kicker} title={t.location.title}>
               {t.location.intro}
             </SectionHeading>
-            <div className="grid gap-8 lg:grid-cols-[3fr_2fr]">
+            <div className="grid gap-8 lg:grid-cols-[5fr_3fr]">
               <MapEmbed showLabel={t.location.showMap} note={t.location.mapNote} title={`${site.name}: map`} />
               <div>
                 <ul className="divide-y divide-line">
@@ -76,7 +76,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
 
         <Faq t={t.faq} />
 
-        <section id="contact" className="bg-stone/60 py-20 sm:py-28">
+        <section id="contact" className="bg-stone/60 py-14 sm:py-18">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <SectionHeading kicker={t.contact.kicker} title={t.contact.title}>
               {t.contact.subtitle}

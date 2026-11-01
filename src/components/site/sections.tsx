@@ -1,15 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Bath, BedDouble, BedSingle, Check, ExternalLink, Star, Trees, Users, Waves } from "lucide-react";
+import { Bath, BedDouble, BedSingle, Check, ExternalLink, Quote, Star, Trees, Users, Waves } from "lucide-react";
 import { heroPhoto, PHOTO_H, PHOTO_W, photoSrc, site } from "@/lib/config";
 import type { Dict, Locale } from "@/lib/i18n";
+import { reviewsFor } from "@/lib/reviews";
 import { WhatsAppLink } from "./whatsapp";
 import { CookieSettingsButton } from "./cookie-settings-button";
 
 export function SectionHeading({ kicker, title, children }: { kicker: string; title: string; children?: ReactNode }) {
   return (
-    <div className="mx-auto mb-10 max-w-2xl text-center">
+    <div className="mx-auto mb-8 max-w-2xl text-center">
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-terracotta">{kicker}</p>
       <h2 className="mt-3 font-serif text-3xl font-semibold leading-tight sm:text-[2.6rem]">{title}</h2>
       {children && <p className="mt-4 text-base leading-relaxed text-muted">{children}</p>}
@@ -95,7 +96,7 @@ export function About({ t }: { t: Dict }) {
     ...[7, 8].map(() => ({ label: t.rooms.single, icon: BedSingle })),
   ];
   return (
-    <section id="villa" className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28">
+    <section id="villa" className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-18">
       <div className="grid items-center gap-12 lg:grid-cols-2">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-terracotta">{t.about.kicker}</p>
@@ -134,7 +135,7 @@ export function About({ t }: { t: Dict }) {
         </div>
       </div>
 
-      <div className="mt-20 grid gap-10 lg:grid-cols-[1fr_2fr]">
+      <div className="mt-14 grid gap-10 lg:grid-cols-[1fr_2fr]">
         <div>
           <h3 className="font-serif text-3xl font-semibold">{t.rooms.title}</h3>
           <p className="mt-3 flex items-center gap-2 text-muted">
@@ -154,7 +155,7 @@ export function About({ t }: { t: Dict }) {
         </ul>
       </div>
 
-      <div className="mt-20">
+      <div className="mt-14">
         <h3 className="mb-8 font-serif text-3xl font-semibold">{t.amenities.title}</h3>
         <div className="grid gap-8 sm:grid-cols-3">
           {t.amenities.groups.map((g) => (
@@ -178,66 +179,74 @@ export function About({ t }: { t: Dict }) {
 
 /* -------------------------------- Reviews ------------------------------- */
 
-export function Reviews({ t }: { t: Dict["reviews"] }) {
+export function Reviews({ t, lang }: { t: Dict["reviews"]; lang: Locale }) {
   const v = site.reviews.vrbo;
-  const cats = Object.entries(v.categories) as [keyof typeof v.categories, number][];
+  const stars = (
+    <div className="flex gap-0.5 text-[#f5c26b]" aria-hidden>
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Star key={i} className="size-4 fill-current" />
+      ))}
+    </div>
+  );
+
   return (
-    <section className="bg-sea-dark py-20 text-white sm:py-28">
+    <section className="bg-sea-dark py-14 text-white sm:py-18">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="grid items-center gap-12 lg:grid-cols-2">
+        {/* Heading left, overall score right */}
+        <div className="flex flex-col gap-8 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#f0b89c]">{t.kicker}</p>
             <h2 className="mt-3 font-serif text-3xl font-semibold sm:text-[2.6rem]">{t.title}</h2>
-            <div className="mt-8 flex items-end gap-4">
-              <span className="font-serif text-6xl font-semibold leading-none">{v.score.toFixed(1)}</span>
-              <div className="pb-1">
-                <div className="flex gap-0.5 text-[#f5c26b]" aria-hidden>
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} className="size-4 fill-current" />
-                  ))}
-                </div>
-                <p className="mt-1 text-sm text-white/80">
-                  {t.exceptional} · {v.count} {t.reviewsCount} {t.on} Vrbo
-                </p>
-              </div>
-            </div>
-            <a
-              href={site.links.vrbo}
-              target="_blank"
-              rel="noopener"
-              className="mt-8 inline-flex items-center gap-2 text-sm font-semibold underline underline-offset-4 hover:text-[#f0b89c]"
-            >
-              {t.readMore} <ExternalLink className="size-4" />
-            </a>
           </div>
-
-          <div className="grid gap-8 sm:grid-cols-2">
-            <ul className="space-y-3">
-              {cats.map(([key, score]) => (
-                <li key={key}>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-white/85">{t.categories[key]}</span>
-                    <span className="font-semibold">{score.toFixed(1)}</span>
-                  </div>
-                  <div className="mt-1.5 h-1.5 rounded-full bg-white/15">
-                    <div className="h-full rounded-full bg-[#f0b89c]" style={{ width: `${(score / v.outOf) * 100}%` }} />
-                  </div>
-                </li>
-              ))}
-            </ul>
-            <div>
-              <p className="text-sm font-semibold text-white/85">{t.themesTitle}</p>
-              <ul className="mt-3 space-y-2.5">
-                {t.themes.map((theme) => (
-                  <li key={theme} className="flex gap-2.5 text-[0.95rem]">
-                    <Check className="mt-0.5 size-4 shrink-0 text-[#f0b89c]" />
-                    {theme}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
+          <a
+            href={site.links.vrbo}
+            target="_blank"
+            rel="noopener"
+            className="group flex items-center gap-4 self-start rounded-2xl bg-white/5 px-5 py-4 ring-1 ring-white/10 transition hover:bg-white/10 sm:self-auto"
+          >
+            <span className="font-serif text-5xl font-semibold leading-none">
+              {v.score.toFixed(1)}
+              <span className="text-xl text-white/60">/{v.outOf}</span>
+            </span>
+            <span>
+              {stars}
+              <span className="mt-1 block text-sm text-white/80">
+                {t.exceptional} {t.on} Vrbo
+              </span>
+            </span>
+          </a>
         </div>
+
+        {/* Real guest quotes */}
+        <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {reviewsFor(lang).map((r) => (
+            <li key={r.name} className="flex flex-col rounded-2xl bg-white/5 p-6 ring-1 ring-white/10 max-sm:nth-[n+4]:hidden">
+              <Quote className="size-7 text-[#f0b89c]" aria-hidden />
+              <blockquote lang={r.lang} className="mt-3 flex-1">
+                {r.title && <p className="font-serif text-xl font-semibold leading-snug">{r.title}</p>}
+                <p className={`leading-relaxed text-white/85 ${r.title ? "mt-2" : "font-serif text-xl font-semibold leading-snug text-white"}`}>
+                  “{r.quote}”
+                </p>
+              </blockquote>
+              <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4 text-sm">
+                <span className="font-semibold">{r.name}</span>
+                <span className="flex items-center gap-2 text-white/60">
+                  {stars}
+                  {r.source}
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
+
+        <a
+          href={site.links.vrbo}
+          target="_blank"
+          rel="noopener"
+          className="mt-8 inline-flex items-center gap-2 text-sm font-semibold underline underline-offset-4 hover:text-[#f0b89c]"
+        >
+          {t.readMore} <ExternalLink className="size-4" />
+        </a>
       </div>
     </section>
   );
@@ -247,7 +256,7 @@ export function Reviews({ t }: { t: Dict["reviews"] }) {
 
 export function Faq({ t }: { t: Dict["faq"] }) {
   return (
-    <section className="mx-auto max-w-3xl px-4 py-20 sm:px-6 sm:py-28">
+    <section className="mx-auto max-w-3xl px-4 py-14 sm:px-6 sm:py-18">
       <SectionHeading kicker={t.kicker} title={t.title} />
       <div className="divide-y divide-line rounded-2xl border border-line bg-paper">
         {t.items.map((item) => (

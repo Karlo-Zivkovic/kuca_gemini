@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { startTransition, useActionState, useEffect, useRef, type ReactNode } from "react";
+import { startTransition, useActionState, useEffect, useRef, useState, type ReactNode } from "react";
 import { CheckCircle2, LoaderCircle, Mail, Phone } from "lucide-react";
 import { sendInquiry, type InquiryState } from "@/app/[lang]/actions";
 import { site } from "@/lib/config";
@@ -13,7 +13,48 @@ import { WhatsAppLink } from "./whatsapp";
 const input =
   "mt-1.5 block w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-base outline-none transition focus:border-sea focus:ring-2 focus:ring-sea/20 aria-[invalid=true]:border-terracotta aria-[invalid=true]:ring-2 aria-[invalid=true]:ring-terracotta/20";
 
+/** How long the thank-you message stays before the empty form comes back. */
+const SUCCESS_MS = 8000;
+
 export function ContactForm({ t, lang }: { t: Dict; lang: Locale }) {
+  const { setStay } = useStay();
+  const [sent, setSent] = useState(false);
+  // Changing the key remounts the form, giving a fresh, empty form and action state.
+  const [round, setRound] = useState(0);
+
+  const reset = () => {
+    setSent(false);
+    setRound((r) => r + 1);
+    setStay({ arrival: "", departure: "" });
+  };
+
+  useEffect(() => {
+    if (!sent) return;
+    const timer = setTimeout(reset, SUCCESS_MS);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sent]);
+
+  if (sent) {
+    return (
+      <div role="status" className="rounded-2xl border border-line bg-paper p-8 text-center">
+        <CheckCircle2 className="mx-auto size-12 text-olive" strokeWidth={1.5} />
+        <p className="mt-4 text-lg font-medium">{t.contact.success}</p>
+        <button
+          type="button"
+          onClick={reset}
+          className="mt-6 rounded-full border border-line px-5 py-2.5 text-sm font-semibold hover:bg-stone"
+        >
+          {t.contact.sendAnother}
+        </button>
+      </div>
+    );
+  }
+
+  return <InquiryForm key={round} t={t} lang={lang} onSent={() => setSent(true)} />;
+}
+
+function InquiryForm({ t, lang, onSent }: { t: Dict; lang: Locale; onSent: () => void }) {
   const c = t.contact;
   const { arrival, departure, setStay } = useStay();
   const [state, action, pending] = useActionState<InquiryState, FormData>(sendInquiry, { status: "idle" });
@@ -24,20 +65,13 @@ export function ContactForm({ t, lang }: { t: Dict; lang: Locale }) {
   }, []);
 
   useEffect(() => {
-    if (state.status === "success") track("inquiry_submitted", { has_dates: Boolean(arrival && departure) });
+    if (state.status !== "success") return;
+    track("inquiry_submitted", { has_dates: Boolean(arrival && departure) });
+    onSent();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
   const invalid = (f: string) => (state.status === "invalid" && state.fields?.includes(f) ? true : undefined);
-
-  if (state.status === "success") {
-    return (
-      <div className="rounded-2xl border border-line bg-paper p-8 text-center">
-        <CheckCircle2 className="mx-auto size-12 text-olive" strokeWidth={1.5} />
-        <p className="mt-4 text-lg font-medium">{c.success}</p>
-      </div>
-    );
-  }
 
   return (
     <form

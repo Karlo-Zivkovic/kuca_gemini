@@ -13,7 +13,7 @@ export function MapEmbed({ showLabel, note, title }: { showLabel: string; note: 
   const load = consent === "granted" || clicked;
 
   return (
-    <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-line bg-stone sm:aspect-[16/10]">
+    <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-line bg-stone sm:aspect-[4/3] lg:aspect-auto lg:h-full lg:min-h-[560px]">
       {load ? (
         <iframe
           src={site.links.googleMapsEmbed}

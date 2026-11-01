@@ -146,6 +146,12 @@ function fileStore(): Store {
   };
 }
 
+if (!process.env.DATABASE_URL && process.env.VERCEL) {
+  throw new Error(
+    "DATABASE_URL is missing. In Vercel: Storage → create a Neon database → connect it to this project, then redeploy.",
+  );
+}
+
 export const db: Store = process.env.DATABASE_URL
   ? postgresStore(process.env.DATABASE_URL)
   : fileStore();
