@@ -135,7 +135,7 @@ export function BookingCalendar({
             <p className="font-medium">
               {formatDate(arrival, tag)} → {formatDate(departure, tag)} ·{" "}
               <strong>
-                {nights} {nights === 1 ? t.night : t.nights}
+                {nights} {new Intl.PluralRules(tag).select(nights) === "one" ? t.night : t.nights}
               </strong>
             </p>
             {unpriced === 0 ? (

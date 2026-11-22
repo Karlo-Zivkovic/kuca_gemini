@@ -1,12 +1,76 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Bath, BedDouble, BedSingle, Check, ExternalLink, Quote, Star, Trees, Users, Waves } from "lucide-react";
+import {
+  AlarmSmoke,
+  Archive,
+  Armchair,
+  Baby,
+  Bath,
+  Beef,
+  BedDouble,
+  BedSingle,
+  Blend,
+  Blinds,
+  BriefcaseMedical,
+  Bubbles,
+  CakeSlice,
+  CalendarDays,
+  Car,
+  Check,
+  ChefHat,
+  Coffee,
+  CookingPot,
+  DoorOpen,
+  Droplet,
+  Droplets,
+  EthernetPort,
+  FerrisWheel,
+  Fence,
+  FireExtinguisher,
+  Flame,
+  FlameKindling,
+  Flower2,
+  Heater,
+  KeyRound,
+  LampDesk,
+  Luggage,
+  Microwave,
+  Mountain,
+  PawPrint,
+  Quote,
+  Refrigerator,
+  Sandwich,
+  Shirt,
+  ShowerHead,
+  Snowflake,
+  Soup,
+  Sparkles,
+  Star,
+  Sun,
+  Table,
+  ThermometerSun,
+  Umbrella,
+  UserCheck,
+  Vault,
+  Wind,
+  Wine,
+  Trees,
+  Tv,
+  Users,
+  Utensils,
+  UtensilsCrossed,
+  WashingMachine,
+  Waves,
+  Wifi,
+  type LucideIcon,
+} from "lucide-react";
 import { heroPhoto, PHOTO_H, PHOTO_W, photoSrc, site } from "@/lib/config";
-import type { Dict, Locale } from "@/lib/i18n";
+import { localeTag, type Dict, type Locale } from "@/lib/i18n";
 import { reviewsFor } from "@/lib/reviews";
 import { WhatsAppLink } from "./whatsapp";
 import { CookieSettingsButton } from "./cookie-settings-button";
+import { FloorPlan } from "./floor-plan";
 
 export function SectionHeading({ kicker, title, children }: { kicker: string; title: string; children?: ReactNode }) {
   return (
@@ -68,7 +132,7 @@ export function Facts({ t }: { t: Dict["facts"] }) {
     { icon: Bath, value: String(site.bathrooms), label: t.bathrooms },
     { icon: Waves, value: "", label: t.pool },
     { icon: Waves, value: "", label: t.hotTub },
-    { icon: Trees, value: "1.200", label: t.garden },
+    { icon: Trees, value: "500", label: t.garden },
   ];
   return (
     <div className="border-b border-line bg-paper">
@@ -89,12 +153,84 @@ export function Facts({ t }: { t: Dict["facts"] }) {
 
 /* --------------------------------- About -------------------------------- */
 
+// Icon keys used by `amenities.groups[].items[].icon` in the dictionaries.
+const amenityIcons: Record<string, LucideIcon> = {
+  pool: Waves,
+  hotTub: Bath,
+  garden: Fence,
+  terrace: Sun,
+  bbq: Beef,
+  dining: Utensils,
+  lounge: Armchair,
+  shower: ShowerHead,
+  ac: Snowflake,
+  wifi: Wifi,
+  tv: Tv,
+  kitchen: CookingPot,
+  washer: WashingMachine,
+  fireplace: Flame,
+  workspace: LampDesk,
+  linen: BedDouble,
+  playground: FerrisWheel,
+  parking: Car,
+  pets: PawPrint,
+  firepit: FlameKindling,
+  outdoorFurniture: Armchair,
+  lounger: Umbrella,
+  gardenView: Flower2,
+  mountain: Mountain,
+  fridge: Refrigerator,
+  stove: ChefHat,
+  microwave: Microwave,
+  dishwasher: Droplets,
+  kettle: Droplet,
+  coffee: Coffee,
+  toaster: Sandwich,
+  blender: Blend,
+  cookware: Soup,
+  dishes: UtensilsCrossed,
+  wine: Wine,
+  baking: CakeSlice,
+  diningTable: Table,
+  pillows: BedSingle,
+  blackout: Blinds,
+  wardrobe: Archive,
+  safe: Vault,
+  drying: Wind,
+  iron: Shirt,
+  hairdryer: Wind,
+  toiletries: Bubbles,
+  hotWater: ThermometerSun,
+  heating: Heater,
+  ethernet: EthernetPort,
+  crib: BedSingle,
+  travelCrib: Baby,
+  highChair: Baby,
+  smoke: AlarmSmoke,
+  extinguisher: FireExtinguisher,
+  firstAid: BriefcaseMedical,
+  entrance: DoorOpen,
+  selfCheckin: KeyRound,
+  host: UserCheck,
+  luggage: Luggage,
+  longStay: CalendarDays,
+  cleaning: Sparkles,
+};
+
+function AmenityItem({ icon, text }: { icon: string; text: string }) {
+  const Icon = amenityIcons[icon] ?? Check;
+  return (
+    <li className="flex items-center gap-4 text-[0.95rem] leading-snug">
+      <Icon className="size-6 shrink-0 text-sea" strokeWidth={1.5} aria-hidden />
+      {text}
+    </li>
+  );
+}
+
 export function About({ t }: { t: Dict }) {
-  const bedrooms: { label: string; icon: typeof BedDouble }[] = [
-    ...[1, 2, 3, 4].map(() => ({ label: t.rooms.king, icon: BedDouble })),
-    ...[5, 6].map(() => ({ label: t.rooms.twin, icon: BedSingle })),
-    ...[7, 8].map(() => ({ label: t.rooms.single, icon: BedSingle })),
-  ];
+  // Same numbering as the floor plan: 1–4 ground floor, 5–6 first floor, 7–8 gallery.
+  const bedIcons = [BedDouble, BedSingle, BedDouble, BedDouble, BedDouble, BedDouble, BedSingle, BedSingle];
+  const bedrooms = t.rooms.beds.map((label, i) => ({ label, icon: bedIcons[i] }));
   return (
     <section id="villa" className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-18">
       <div className="grid items-center gap-12 lg:grid-cols-2">
@@ -155,23 +291,39 @@ export function About({ t }: { t: Dict }) {
         </ul>
       </div>
 
+      <FloorPlan t={t.floorPlan} />
+
       <div className="mt-14">
         <h3 className="mb-8 font-serif text-3xl font-semibold">{t.amenities.title}</h3>
-        <div className="grid gap-8 sm:grid-cols-3">
-          {t.amenities.groups.map((g) => (
-            <div key={g.name}>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.15em] text-olive">{g.name}</p>
-              <ul className="space-y-2.5">
-                {g.items.map((item) => (
-                  <li key={item} className="flex gap-2.5 text-[0.95rem]">
-                    <Check className="mt-0.5 size-4 shrink-0 text-sea" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
+        <ul className="grid gap-x-10 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+          {t.amenities.highlights.map((item) => (
+            <AmenityItem key={item.text} {...item} />
           ))}
-        </div>
+        </ul>
+
+        <details className="group mt-10">
+          <summary className="inline-flex cursor-pointer list-none rounded-xl border border-ink px-6 py-3 font-semibold transition hover:bg-ink/5 [&::-webkit-details-marker]:hidden">
+            <span className="group-open:hidden">
+              {t.amenities.showAll.replace(
+                "{n}",
+                String(new Set(t.amenities.groups.flatMap((g) => g.items.map((i) => i.text))).size),
+              )}
+            </span>
+            <span className="hidden group-open:inline">{t.amenities.showLess}</span>
+          </summary>
+          <div className="mt-10 gap-x-10 sm:columns-2 lg:columns-3">
+            {t.amenities.groups.map((g) => (
+              <div key={g.name} className="mb-10 break-inside-avoid">
+                <p className="mb-4 text-xs font-semibold uppercase tracking-[0.15em] text-olive">{g.name}</p>
+                <ul className="space-y-4">
+                  {g.items.map((item) => (
+                    <AmenityItem key={item.text} {...item} />
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </details>
       </div>
     </section>
   );
@@ -180,7 +332,10 @@ export function About({ t }: { t: Dict }) {
 /* -------------------------------- Reviews ------------------------------- */
 
 export function Reviews({ t, lang }: { t: Dict["reviews"]; lang: Locale }) {
-  const v = site.reviews.vrbo;
+  const ratings = [
+    { name: "Airbnb", label: t.guestFavourite, digits: 2, ...site.reviews.airbnb },
+    { name: "Vrbo", label: t.exceptional, digits: 1, ...site.reviews.vrbo },
+  ];
   const stars = (
     <div className="flex gap-0.5 text-[#f5c26b]" aria-hidden>
       {Array.from({ length: 5 }).map((_, i) => (
@@ -198,23 +353,26 @@ export function Reviews({ t, lang }: { t: Dict["reviews"]; lang: Locale }) {
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#f0b89c]">{t.kicker}</p>
             <h2 className="mt-3 font-serif text-3xl font-semibold sm:text-[2.6rem]">{t.title}</h2>
           </div>
-          <a
-            href={site.links.vrbo}
-            target="_blank"
-            rel="noopener"
-            className="group flex items-center gap-4 self-start rounded-2xl bg-white/5 px-5 py-4 ring-1 ring-white/10 transition hover:bg-white/10 sm:self-auto"
-          >
-            <span className="font-serif text-5xl font-semibold leading-none">
-              {v.score.toFixed(1)}
-              <span className="text-xl text-white/60">/{v.outOf}</span>
-            </span>
-            <span>
-              {stars}
-              <span className="mt-1 block text-sm text-white/80">
-                {t.exceptional} {t.on} Vrbo
-              </span>
-            </span>
-          </a>
+          <div className="flex flex-wrap gap-3">
+            {ratings.map((r) => (
+              <div key={r.name} className="flex items-center gap-4 rounded-2xl bg-white/5 px-5 py-4 ring-1 ring-white/10">
+                <span className="font-serif text-5xl font-semibold leading-none">
+                  {new Intl.NumberFormat(localeTag[lang], {
+                    minimumFractionDigits: r.digits,
+                    maximumFractionDigits: r.digits,
+                  }).format(r.score)}
+                  <span className="text-xl text-white/60">/{r.outOf}</span>
+                </span>
+                <span>
+                  {stars}
+                  <span className="mt-1 block text-sm text-white/80">
+                    {r.label} {t.on} {r.name}
+                  </span>
+                  <span className="block text-xs text-white/60">{t.reviewsCount.replace("{n}", String(r.count))}</span>
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Real guest quotes */}
@@ -239,14 +397,6 @@ export function Reviews({ t, lang }: { t: Dict["reviews"]; lang: Locale }) {
           ))}
         </ul>
 
-        <a
-          href={site.links.vrbo}
-          target="_blank"
-          rel="noopener"
-          className="mt-8 inline-flex items-center gap-2 text-sm font-semibold underline underline-offset-4 hover:text-[#f0b89c]"
-        >
-          {t.readMore} <ExternalLink className="size-4" />
-        </a>
       </div>
     </section>
   );

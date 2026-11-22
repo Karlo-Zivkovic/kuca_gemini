@@ -12,7 +12,7 @@ export function ConsentBanner({ t, lang }: { t: Dict["cookies"]; lang: Locale })
     <div
       role="dialog"
       aria-live="polite"
-      aria-label="Cookies"
+      aria-label={t.label}
       className="fixed inset-x-3 bottom-3 z-50 mx-auto max-w-xl rounded-2xl border border-line bg-paper p-4 shadow-xl sm:p-5"
     >
       <p className="text-sm leading-relaxed text-muted">

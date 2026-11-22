@@ -69,6 +69,14 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
                 </a>
                 <h3 className="mt-8 font-serif text-2xl font-semibold">{t.location.gettingThere}</h3>
                 <p className="mt-2 leading-relaxed text-muted">{t.location.gettingThereText}</p>
+                <a
+                  href={site.links.ferryTickets}
+                  target="_blank"
+                  rel="noopener"
+                  className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-sea underline underline-offset-4"
+                >
+                  {t.location.ferryTickets} <ExternalLink className="size-4" />
+                </a>
               </div>
             </div>
           </div>

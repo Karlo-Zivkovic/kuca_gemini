@@ -12,7 +12,7 @@ function saveLangCookie(l: Locale) {
   document.cookie = `lang=${l};path=/;max-age=31536000;samesite=lax`;
 }
 
-export function LanguagePicker({ lang, onLight }: { lang: Locale; onLight: boolean }) {
+export function LanguagePicker({ lang, onLight, label }: { lang: Locale; onLight: boolean; label: string }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -61,7 +61,7 @@ export function LanguagePicker({ lang, onLight }: { lang: Locale; onLight: boole
       {open && (
         <ul
           role="listbox"
-          aria-label="Language"
+          aria-label={label}
           className="absolute right-0 top-full mt-2 w-44 overflow-hidden rounded-xl border border-line bg-paper py-1 text-ink shadow-lg"
         >
           {locales.map((l) => (

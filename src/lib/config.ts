@@ -30,8 +30,14 @@ export const site = {
       "https://maps.google.com/maps?q=Villa%20Gemini%2C%20Put%20Radonje%204%2C%2021425%20Selca&z=15&output=embed",
     vrbo: "https://www.vrbo.com/en-gb/p4364367",
     airbnb: "https://www.airbnb.com/rooms/1681296825413855210",
+    ferryTickets: "https://www.jadrolinija.hr/hr/pretrazite-kupite-kartu",
   },
   reviews: {
+    airbnb: {
+      score: 4.96,
+      outOf: 5,
+      count: 23,
+    },
     vrbo: {
       score: 9.8,
       outOf: 10,
