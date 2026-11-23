@@ -63,6 +63,8 @@ const en = {
   },
   floorPlan: {
     title: "Floor plan",
+    zoom: "Enlarge floor plan",
+    close: "Close",
     ground: "Ground floor",
     gallery: "Loft",
     wcOut: "Outdoor WC",

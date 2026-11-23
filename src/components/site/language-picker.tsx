@@ -6,7 +6,17 @@ import { Check, ChevronDown, Globe } from "lucide-react";
 import { locales, type Locale } from "@/lib/i18n";
 import { track } from "@/lib/consent";
 
-const names: Record<Locale, string> = { hr: "Hrvatski", en: "English", de: "Deutsch" };
+const names: Record<Locale, string> = {
+  hr: "Hrvatski",
+  en: "English",
+  de: "Deutsch",
+  pl: "Polski",
+  fr: "Français",
+  cs: "Čeština",
+  no: "Norsk",
+  sv: "Svenska",
+};
+const prefix = new RegExp(`^/(${locales.join("|")})(?=/|$)`);
 
 function saveLangCookie(l: Locale) {
   document.cookie = `lang=${l};path=/;max-age=31536000;samesite=lax`;
@@ -38,7 +48,7 @@ export function LanguagePicker({ lang, onLight, label }: { lang: Locale; onLight
     saveLangCookie(l);
     track("language_change", { language: l });
     // Stay at the same spot on the page, just in the other language.
-    router.replace(pathname.replace(/^\/(hr|en|de)(?=\/|$)/, `/${l}`), { scroll: false });
+    router.replace(pathname.replace(prefix, `/${l}`), { scroll: false });
   };
 
   return (
@@ -48,7 +58,7 @@ export function LanguagePicker({ lang, onLight, label }: { lang: Locale; onLight
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-label={`Language: ${names[lang]}`}
+        aria-label={`${label}: ${names[lang]}`}
         className={`flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold uppercase transition ${
           onLight ? "hover:bg-stone" : "hover:bg-white/15"
         }`}

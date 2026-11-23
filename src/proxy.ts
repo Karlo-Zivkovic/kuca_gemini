@@ -15,8 +15,9 @@ function preferredLocale(request: NextRequest): Locale {
     .sort((a, b) => b.q - a.q);
 
   for (const { lang } of ranked) {
-    // Bosnian, Serbian and Slovenian speakers read Croatian fine.
-    const mapped = ["bs", "sr", "sh"].includes(lang) ? "hr" : lang === "at" ? "de" : lang;
+    // Bosnian/Serbian speakers read Croatian, Slovaks read Czech; Norwegian browsers send nb/nn/no.
+    const aliases: Record<string, string> = { bs: "hr", sr: "hr", sh: "hr", at: "de", sk: "cs", nb: "no", nn: "no" };
+    const mapped = aliases[lang] ?? lang;
     if (hasLocale(mapped)) return mapped;
   }
   return defaultLocale;

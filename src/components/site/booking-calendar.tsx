@@ -2,7 +2,7 @@
 
 import { createContext, use, useState } from "react";
 import { DayButton, DayPicker, type DayButtonProps } from "react-day-picker";
-import { de, enGB, hr } from "react-day-picker/locale";
+import { cs, de, enGB, fr, hr, nb, pl, sv } from "react-day-picker/locale";
 import "react-day-picker/style.css";
 import { addDays, addMonths } from "date-fns";
 import { bookedMatchers, isNightBooked, rangeHasBookedNight, useMediaQuery, useToday, type IsoRange } from "@/lib/calendar";
@@ -14,7 +14,7 @@ import { localeTag } from "@/lib/i18n";
 import type { DayPrice } from "@/lib/types";
 import { useStay } from "./booking-context";
 
-const dpLocale = { hr, en: enGB, de };
+const dpLocale = { hr, en: enGB, de, pl, fr, cs, no: nb, sv };
 
 /** Formats a price the local way: "€650" in English, "650 €" in Croatian/German. */
 const euro = (tag: string) =>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { createContext, useContext, useRef, useState, type ReactNode } from "react";
+import { Maximize2, X } from "lucide-react";
 import type { Dict } from "@/lib/i18n";
 
 /*
@@ -193,9 +194,18 @@ function Outdoor({ d }: { d: string }) {
   return <path d={d} className="fill-olive/10 stroke-olive" strokeWidth={0.4} strokeDasharray="1.5 1" />;
 }
 
-function Svg({ viewBox, minWidth, label, children }: { viewBox: string; minWidth: number; label: string; children: ReactNode }) {
+// True inside the full-screen viewer: the plan then fills the available box instead of the page width.
+const FullScreen = createContext(false);
+
+function Svg({ viewBox, label, children }: { viewBox: string; label: string; children: ReactNode }) {
+  const full = useContext(FullScreen);
   return (
-    <svg viewBox={viewBox} role="img" aria-label={label} className="mx-auto block h-auto w-full max-w-4xl" style={{ minWidth }}>
+    <svg
+      viewBox={viewBox}
+      role="img"
+      aria-label={label}
+      className={full ? "block h-full w-full" : "mx-auto block h-auto w-full max-w-4xl"}
+    >
       {children}
     </svg>
   );
@@ -205,7 +215,7 @@ function Svg({ viewBox, minWidth, label, children }: { viewBox: string; minWidth
 
 function GroundFloor({ t }: { t: Labels }) {
   return (
-    <Svg viewBox="-3 0 160 122" minWidth={580} label={`${t.title}: ${t.ground}`}>
+    <Svg viewBox="-3 0 160 122" label={`${t.title}: ${t.ground}`}>
       {/* Outside: covered terrace, barbecue, outdoor WC */}
       <Outdoor d="M75 2 H154 V114 H115 V14 H75 Z" />
       <rect x={75} y={3} width={27} height={11} className="fill-stone/70" />
@@ -368,7 +378,7 @@ function GroundFloor({ t }: { t: Labels }) {
 
 function FirstFloor({ t }: { t: Labels }) {
   return (
-    <Svg viewBox="-8 0 197 106" minWidth={600} label={`${t.title}: ${t.floor1}`}>
+    <Svg viewBox="-8 0 197 106" label={`${t.title}: ${t.floor1}`}>
       {/* Outdoor: terrace + balcony */}
       <Outdoor d="M125 4 H172 V103 H2 V89 H125 Z" />
 
@@ -519,7 +529,7 @@ function FirstFloor({ t }: { t: Labels }) {
 
 function Gallery({ t }: { t: Labels }) {
   return (
-    <Svg viewBox="-2 0 153 62" minWidth={540} label={`${t.title}: ${t.gallery}`}>
+    <Svg viewBox="-2 0 153 62" label={`${t.title}: ${t.gallery}`}>
       <Outdoor d="M0 28 H14 V58 H0 Z" />
 
       {/* Room fills */}
@@ -588,6 +598,13 @@ const floors = ["ground", "floor1", "gallery"] as const;
 
 export function FloorPlan({ t }: { t: Labels }) {
   const [floor, setFloor] = useState<(typeof floors)[number]>("ground");
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const plan =
+    floor === "ground" ? <GroundFloor t={t} /> : floor === "floor1" ? <FirstFloor t={t} /> : <Gallery t={t} />;
+  // On phones the plan is shrunk to the screen width; tapping it opens a full-screen view turned sideways.
+  const openFull = () => {
+    if (window.matchMedia("(max-width: 639px)").matches) dialogRef.current?.showModal();
+  };
   return (
     <figure id="floor-plan" className="mt-14 scroll-mt-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -609,12 +626,36 @@ export function FloorPlan({ t }: { t: Labels }) {
           ))}
         </div>
       </div>
-      <div role="tabpanel" className="mt-6 overflow-x-auto rounded-2xl border border-line bg-paper p-4 sm:p-6">
-        {floor === "ground" && <GroundFloor t={t} />}
-        {floor === "floor1" && <FirstFloor t={t} />}
-        {floor === "gallery" && <Gallery t={t} />}
+      <div role="tabpanel" onClick={openFull} className="mt-6 rounded-2xl border border-line bg-paper p-2 sm:p-6">
+        {plan}
       </div>
+      <button
+        type="button"
+        onClick={() => dialogRef.current?.showModal()}
+        className="mt-3 inline-flex items-center gap-2 rounded-full bg-sea px-4 py-2 text-sm font-semibold text-white sm:hidden"
+      >
+        <Maximize2 className="size-4" /> {t.zoom}
+      </button>
       <figcaption className="mt-3 text-sm text-muted">{t.note}</figcaption>
+
+      <dialog
+        ref={dialogRef}
+        aria-label={`${t.title}: ${t[floor]}`}
+        className="m-0 h-dvh max-h-none w-screen max-w-none bg-paper p-0 backdrop:bg-black/60"
+      >
+        {/* Turned sideways in portrait so the plan uses the phone's full length */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 portrait:h-[calc(100dvw-1.5rem)] portrait:w-[calc(100dvh-4.5rem)] portrait:rotate-90 landscape:h-[calc(100dvh-1.5rem)] landscape:w-[calc(100dvw-4.5rem)]">
+          <FullScreen.Provider value={true}>{plan}</FullScreen.Provider>
+        </div>
+        <button
+          type="button"
+          onClick={() => dialogRef.current?.close()}
+          aria-label={t.close}
+          className="absolute right-2 top-2 rounded-full bg-ink/10 p-2.5 text-ink"
+        >
+          <X className="size-6" />
+        </button>
+      </dialog>
     </figure>
   );
 }

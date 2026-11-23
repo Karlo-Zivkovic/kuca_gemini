@@ -63,6 +63,8 @@ const de: Dict = {
   },
   floorPlan: {
     title: "Grundriss",
+    zoom: "Grundriss vergrößern",
+    close: "Schließen",
     ground: "Erdgeschoss",
     gallery: "Galerie",
     wcOut: "Außen-WC",

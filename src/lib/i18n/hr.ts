@@ -63,6 +63,8 @@ const hr: Dict = {
   },
   floorPlan: {
     title: "Tlocrt",
+    zoom: "Uvećaj tlocrt",
+    close: "Zatvori",
     ground: "Prizemlje",
     gallery: "Galerija",
     wcOut: "Vanjski WC",
