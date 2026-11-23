@@ -29,7 +29,11 @@ export const site = {
     googleMapsEmbed:
       "https://maps.google.com/maps?q=Villa%20Gemini%2C%20Put%20Radonje%204%2C%2021425%20Selca&z=15&output=embed",
     vrbo: "https://www.vrbo.com/en-gb/p4364367",
-    airbnb: "https://www.airbnb.com/rooms/1681296825413855210",
+    airbnb: "https://www.airbnb.com/rooms/16154620",
+    // Same listings, opened on the reviews. Vrbo has no working deep link (it drops the
+    // parameter), so it opens the listing, which shows "See all reviews" near the top.
+    vrboReviews: "https://www.vrbo.com/en-gb/p4364367",
+    airbnbReviews: "https://www.airbnb.com/rooms/16154620/reviews",
     ferryTickets: "https://www.jadrolinija.hr/hr/pretrazite-kupite-kartu",
   },
   reviews: {

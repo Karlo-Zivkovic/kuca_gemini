@@ -11,6 +11,7 @@ import { site } from "@/lib/config";
 import { formatDate, fromIso, nightsBetween, toIso } from "@/lib/dates";
 import type { DayPrice } from "@/lib/types";
 import { clearPrices, setPrices } from "./actions";
+import { safeCall } from "./safe-call";
 
 const eur = new Intl.NumberFormat("hr-HR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
 const fmtShort = (iso: string) => formatDate(iso, "hr-HR", { weekday: "short", day: "numeric", month: "numeric" });
@@ -89,7 +90,8 @@ export function PricesTab({ prices, setPricesState }: { prices: DayPrice[]; setP
 
   const save = () =>
     start(async () => {
-      const res = await setPrices(from, end, Number(price));
+      const res = await safeCall(() => setPrices(from, end, Number(price)));
+      if (!res) return;
       setPricesState(res.prices);
       setMsg(res.ok ? { ok: true, text: "Cijena spremljena ✓" } : { ok: false, text: res.error ?? "Greška." });
       if (res.ok) reset();
@@ -97,7 +99,8 @@ export function PricesTab({ prices, setPricesState }: { prices: DayPrice[]; setP
 
   const clear = () =>
     start(async () => {
-      const res = await clearPrices(from, end);
+      const res = await safeCall(() => clearPrices(from, end));
+      if (!res) return;
       setPricesState(res.prices);
       setMsg(res.ok ? { ok: true, text: "Cijena uklonjena, datumi su sada „na upit” ✓" } : { ok: false, text: res.error ?? "Greška." });
       if (res.ok) reset();

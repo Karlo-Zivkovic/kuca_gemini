@@ -51,6 +51,7 @@ export function BookingCalendar({
   const twoMonths = useMediaQuery("(min-width: 768px)");
   const { arrival, departure, setStay } = useStay();
   const [error, setError] = useState("");
+  const [hover, setHover] = useState(""); // day under the mouse (desktop), for the range preview
 
   if (!today) {
     return <div className="grid h-96 place-items-center text-muted">{t.loading}</div>;
@@ -61,36 +62,92 @@ export function BookingCalendar({
   const fmt = euro(tag);
   const priceInfo: PriceInfo = { priceOf: (iso) => priceMap.get(iso), format: (n) => fmt.format(n) };
 
+  const minNights = site.minNights;
+  const short = (x: string) => formatDate(x, tag, { day: "numeric", month: "short" });
+  /** First booked night after `day`, if any. */
+  const nextBookedAfter = (day: string) => booked.map((r) => r.from).filter((f) => f > day).sort()[0];
+  /** An arrival needs at least `minNights` free nights before the next booking. */
+  const roomFrom = (day: string) => {
+    const next = nextBookedAfter(day);
+    return !next || nightsBetween(day, next) >= minNights;
+  };
+
   const select = (day: Date) => {
     const iso = toIso(day);
     if (iso < today) return;
     setError("");
+    const gapError = () => setError(t.gapTooShort.replace("{date}", short(iso)).replace("{n}", String(minNights)));
     const startNew = () => {
       if (isNightBooked(iso, booked)) return;
+      if (!roomFrom(iso)) return gapError();
       setStay({ arrival: iso, departure: "" });
     };
 
     if (!arrival || departure) return startNew();
     if (iso <= arrival) return startNew();
     if (rangeHasBookedNight(arrival, iso, booked)) {
-      setError(t.conflict);
+      // The tapped day can't be the departure. If it's free, it becomes the new arrival: say so,
+      // otherwise it looks as if the tapped (free) day itself were booked.
+      if (isNightBooked(iso, booked)) {
+        setError(t.conflict);
+        return;
+      }
+      if (!roomFrom(iso)) return gapError();
+      setError(t.conflictNewArrival.replaceAll("{from}", short(arrival)).replaceAll("{to}", short(iso)));
       return startNew();
+    }
+    if (nightsBetween(arrival, iso) < minNights) {
+      const earliest = toIso(addDays(fromIso(arrival), minNights));
+      setError(t.minStayPick.replace("{n}", String(minNights)).replace("{date}", short(earliest)));
+      return;
     }
     setStay({ arrival, departure: iso });
     track("dates_selected", { arrival, departure: iso, nights: nightsBetween(arrival, iso) });
   };
 
+  // While choosing the departure: which days can end the stay, and a preview up to the hovered day.
+  const choosing = Boolean(arrival && !departure);
+  const nextBooking = choosing ? booked.map((r) => r.from).filter((f) => f > arrival).sort()[0] : undefined;
+  const lastDeparture = nextBooking ? fromIso(nextBooking) : addMonths(fromIso(today), 24);
+  const firstDeparture = choosing ? addDays(fromIso(arrival), site.minNights) : undefined;
+  const hoverValid =
+    choosing &&
+    hover > arrival &&
+    nightsBetween(arrival, hover) >= site.minNights &&
+    !rangeHasBookedNight(arrival, hover, booked);
+  const choosingModifiers = choosing
+    ? {
+        canDepart: { from: firstDeparture!, to: lastDeparture },
+        cannotDepart: [
+          { from: addDays(fromIso(arrival), 1), to: addDays(firstDeparture!, -1) },
+          ...(nextBooking ? [{ after: lastDeparture }] : []),
+        ],
+        preview: hoverValid ? { from: addDays(fromIso(arrival), 1), to: fromIso(hover) } : [],
+        previewBad: hover > arrival && !hoverValid ? fromIso(hover) : [],
+      }
+    : { canDepart: [], cannotDepart: [], preview: [], previewBad: [] };
+  // Before an arrival is chosen: fade the free days right before a booking where a stay can't
+  // start, because fewer than minNights free nights follow.
+  const noArrival = choosing
+    ? []
+    : booked.map((r) => ({ from: addDays(fromIso(r.from), -(site.minNights - 1)), to: addDays(fromIso(r.from), -1) }));
+
   const nights = arrival && departure ? nightsBetween(arrival, departure) : 0;
-  const tooShort = nights > 0 && nights < site.minNights;
 
   // Estimate: sum of the nightly prices from arrival up to (not including) departure.
   let total = 0;
-  let unpriced = 0;
+  const nightPrices: number[] = [];
   for (let i = 0; i < nights; i++) {
     const p = priceMap.get(toIso(addDays(fromIso(arrival), i)));
-    if (p === undefined) unpriced++;
-    else total += p;
+    if (p !== undefined) {
+      total += p;
+      nightPrices.push(p);
+    }
   }
+  const priced = nightPrices.length;
+  const unpriced = nights - priced;
+  const samePrice = priced > 0 && nightPrices.every((p) => p === nightPrices[0]);
+  const nightsWord = (n: number) => (new Intl.PluralRules(tag).select(n) === "one" ? t.night : t.nights);
 
   return (
     <div>
@@ -108,8 +165,18 @@ export function BookingCalendar({
             selected={arrival ? { from: fromIso(arrival), to: departure ? fromIso(departure) : undefined } : undefined}
             onSelect={(_, day) => select(day)}
             disabled={{ before: fromIso(today) }}
-            modifiers={{ booked: bookedMatchers(booked) }}
-            modifiersClassNames={{ booked: "vg-booked", disabled: "vg-past" }}
+            onDayMouseEnter={(d) => setHover(toIso(d))}
+            onDayMouseLeave={() => setHover("")}
+            modifiers={{ booked: bookedMatchers(booked), noArrival, ...choosingModifiers }}
+            modifiersClassNames={{
+              booked: "vg-booked",
+              disabled: "vg-past",
+              noArrival: "vg-no-arrival",
+              canDepart: "vg-can-depart",
+              cannotDepart: "vg-cannot-depart",
+              preview: "vg-preview",
+              previewBad: "vg-preview-bad",
+            }}
             components={{ DayButton: PricedDayButton }}
           />
         </PriceContext>
@@ -135,18 +202,33 @@ export function BookingCalendar({
             <p className="font-medium">
               {formatDate(arrival, tag)} → {formatDate(departure, tag)} ·{" "}
               <strong>
-                {nights} {new Intl.PluralRules(tag).select(nights) === "one" ? t.night : t.nights}
+                {nights} {nightsWord(nights)}
               </strong>
             </p>
             {unpriced === 0 ? (
-              <p className="mt-1">
-                {t.total}: <strong className="font-serif text-xl">{fmt.format(total)}</strong>
-                <span className="ml-2 text-sm text-muted">{t.totalNote}</span>
-              </p>
+              <>
+                <p className="mt-1">
+                  {t.total}: <strong className="font-serif text-2xl">{fmt.format(total)}</strong>
+                </p>
+                <p className="text-sm text-muted">
+                  {samePrice
+                    ? `${nights} ${nightsWord(nights)} × ${fmt.format(nightPrices[0])}`
+                    : t.avgPerNight.replace("{price}", fmt.format(Math.round(total / nights)))}
+                  {" · "}
+                  {t.totalNote}
+                </p>
+              </>
+            ) : priced > 0 ? (
+              <>
+                <p className="mt-1">
+                  {t.pricedNights.replace("{k}", String(priced)).replace("{n}", String(nights))}:{" "}
+                  <strong className="font-serif text-xl">{fmt.format(total)}</strong>
+                </p>
+                <p className="text-sm text-muted">{t.partlyOnRequest}</p>
+              </>
             ) : (
-              <p className="mt-1 text-sm text-muted">{unpriced === nights ? t.allOnRequest : t.partlyOnRequest}</p>
+              <p className="mt-1 text-sm text-muted">{t.allOnRequest}</p>
             )}
-            {tooShort && <p className="mt-1 text-sm text-muted">{t.minStayNote.replace("{n}", String(site.minNights))}</p>}
           </div>
         )}
         <div className="mt-3 flex shrink-0 gap-2 sm:mt-0">

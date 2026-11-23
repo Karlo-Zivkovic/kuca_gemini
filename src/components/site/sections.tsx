@@ -24,6 +24,7 @@ import {
   DoorOpen,
   Droplet,
   Droplets,
+  ExternalLink,
   EthernetPort,
   FerrisWheel,
   Fence,
@@ -412,6 +413,23 @@ export function Reviews({ t, lang }: { t: Dict["reviews"]; lang: Locale }) {
           </ul>
         </div>
 
+        <p className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-semibold">
+          <span className="text-white/80">{t.readAllOn}</span>
+          {[
+            ["Vrbo", site.links.vrboReviews],
+            ["Airbnb", site.links.airbnbReviews],
+          ].map(([name, href]) => (
+            <a
+              key={name}
+              href={href}
+              target="_blank"
+              rel="noopener"
+              className="inline-flex items-center gap-1.5 underline underline-offset-4 hover:text-[#f0b89c]"
+            >
+              {name} <ExternalLink className="size-4" />
+            </a>
+          ))}
+        </p>
       </div>
     </section>
   );

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CalendarDays, Euro, ExternalLink, LogOut } from "lucide-react";
 import type { Booking, DayPrice } from "@/lib/types";
-import { logout } from "./actions";
+import { loadAdminData, logout } from "./actions";
+import { goToLogin } from "./safe-call";
 import { CalendarTab } from "./calendar-tab";
 import { PricesTab } from "./prices-tab";
 
@@ -11,6 +12,26 @@ export function AdminApp({ initialBookings, initialPrices }: { initialBookings: 
   const [tab, setTab] = useState<"calendar" | "prices">("calendar");
   const [bookings, setBookings] = useState(initialBookings);
   const [prices, setPrices] = useState(initialPrices);
+
+  // The app can stay open for days on mom's phone: reload the data whenever it comes back
+  // to the foreground, so changes made on another device show up.
+  useEffect(() => {
+    const refresh = async () => {
+      if (document.visibilityState !== "visible") return;
+      try {
+        const res = await loadAdminData();
+        if (res.expired) goToLogin();
+        else {
+          setBookings(res.bookings);
+          setPrices(res.prices);
+        }
+      } catch {
+        // Offline: keep showing what we have; the next save reports the problem.
+      }
+    };
+    document.addEventListener("visibilitychange", refresh);
+    return () => document.removeEventListener("visibilitychange", refresh);
+  }, []);
 
   return (
     <div className="mx-auto min-h-dvh max-w-3xl pb-28">

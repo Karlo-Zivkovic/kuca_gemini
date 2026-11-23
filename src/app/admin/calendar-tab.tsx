@@ -8,16 +8,22 @@ import { addMonths, endOfMonth, startOfMonth } from "date-fns";
 import { ChevronDown, LoaderCircle, Phone, Trash2, Users, X } from "lucide-react";
 import { rangeHasBookedNight, useMediaQuery, useToday } from "@/lib/calendar";
 import { formatDate, fromIso, nightsBetween, toIso } from "@/lib/dates";
-import { emptyDetails, type Booking, type BookingDetails } from "@/lib/types";
+import { emptyDetails, type Booking, type BookingDetails, type BookingKind } from "@/lib/types";
 import { addBooking, deleteBooking, updateBookingDetails } from "./actions";
+import { safeCall } from "./safe-call";
 
 const SOURCES = ["Airbnb", "Booking", "Vrbo", "Interhome", "Direktno", "Privatno"];
 const fmt = (iso: string) => formatDate(iso, "hr-HR", { day: "numeric", month: "numeric", year: "numeric" });
 const fmtShort = (iso: string) => formatDate(iso, "hr-HR", { weekday: "short", day: "numeric", month: "numeric" });
 const fmtDayMonth = (iso: string) => formatDate(iso, "hr-HR", { day: "numeric", month: "numeric" });
 
-/** "Michael (Njemačka) · Booking", falling back to the note, then "Bez imena". */
+/** Closed periods ("Nedostupno") are grey stripes, so they never look like a guest. */
+const BLOCKED_COLOR = "#6b7280";
+const BLOCKED_BG = "repeating-linear-gradient(135deg, #6b7280 0 5px, #9ca3af 5px 10px)";
+
+/** "Michael (Njemačka) · Booking", falling back to the note, then "Bez imena". Closed: "Nedostupno · note". */
 function label(b: Booking) {
+  if (b.kind === "blocked") return ["Nedostupno", b.note].filter(Boolean).join(" · ");
   const who = b.guestName ? b.guestName + (b.guestCountry ? ` (${b.guestCountry})` : "") : b.guestCountry;
   return [who, b.source].filter(Boolean).join(" · ") || b.note || "Bez imena";
 }
@@ -59,6 +65,7 @@ function assignColors(bookings: Booking[]) {
   const colors = new Map<string, string>();
   let prev: number | null = null;
   for (const b of sorted) {
+    if (b.kind === "blocked") continue;
     let i = hash(b.id) % PALETTE.length;
     while (prev !== null && hueDistance(i, prev) < 2) i = (i + 1) % PALETTE.length;
     colors.set(b.id, PALETTE[i]);
@@ -92,14 +99,10 @@ function BookingDayButton(props: DayButtonProps) {
   const { night, depart, color, openedId } = paintFor(toIso(day.date));
   if (!night && !depart) return <DayButton {...props} />;
 
-  const nightColor = night && color(night);
+  const nightColor = night && (night.kind === "blocked" ? BLOCKED_BG : color(night));
   const departColor = depart && color(depart);
-  const background =
-    nightColor && departColor
-      ? `linear-gradient(135deg, ${departColor} 0 50%, ${nightColor} 50%)`
-      : nightColor
-        ? nightColor
-        : `linear-gradient(135deg, ${departColor} 0 50%, transparent 50%)`;
+  const departHalf = departColor && `linear-gradient(135deg, ${departColor} 0 50%, transparent 50%)`;
+  const background = [departHalf, nightColor].filter(Boolean).join(", ");
 
   const opened = [night, depart].find((b) => b && b.id === openedId);
   const dimmed = Boolean(openedId) && !opened;
@@ -134,6 +137,7 @@ export function CalendarTab({ bookings, setBookings }: { bookings: Booking[]; se
   const [arrival, setArrival] = useState("");
   const [departure, setDeparture] = useState("");
   const [details, setDetails] = useState<BookingDetails>(emptyDetails);
+  const [kind, setKind] = useState<BookingKind>("booking");
   const [openedId, setOpenedId] = useState<string | null>(null);
   const [popover, setPopover] = useState<Popover | null>(null);
   const [error, setError] = useState("");
@@ -142,7 +146,8 @@ export function CalendarTab({ bookings, setBookings }: { bookings: Booking[]; se
   const panelRef = useRef<HTMLDivElement>(null);
 
   const colors = useMemo(() => assignColors(bookings), [bookings]);
-  const color = (b: Booking) => colors.get(b.id) ?? PALETTE[0];
+  const color = (b: Booking) => (b.kind === "blocked" ? BLOCKED_COLOR : (colors.get(b.id) ?? PALETTE[0]));
+  const swatch = (b: Booking) => (b.kind === "blocked" ? BLOCKED_BG : color(b));
 
   // Close the popover on a tap anywhere outside it (taps on days handle themselves).
   useEffect(() => {
@@ -179,6 +184,7 @@ export function CalendarTab({ bookings, setBookings }: { bookings: Booking[]; se
     setArrival("");
     setDeparture("");
     setDetails(emptyDetails);
+    setKind("booking");
     setError("");
   };
 
@@ -225,11 +231,16 @@ export function CalendarTab({ bookings, setBookings }: { bookings: Booking[]; se
     }
 
     if (choosingDeparture) {
+      // A booking lies between the arrival and the tapped (free) day: that day can't be the
+      // departure, so start over from it instead of getting stuck on the old arrival.
       const next = bookings.find((b) => b.checkIn >= arrival && b.checkIn < iso);
+      setOpenedId(null);
+      setArrival(iso);
+      setDeparture("");
       setError(
         next
-          ? `Između je već rezervacija (${fmtShort(next.checkIn)} → ${fmtShort(next.checkOut)}). Odlazak može biti najkasnije ${fmtShort(next.checkIn)}.`
-          : "U tom razdoblju već postoji rezervacija.",
+          ? `Između ${fmtShort(arrival)} i ${fmtShort(iso)} je ${next.kind === "blocked" ? "zatvoren termin" : "rezervacija"} (${fmtShort(next.checkIn)} → ${fmtShort(next.checkOut)}), pa je ${fmtShort(iso)} sada novi dan dolaska. Ako ste htjeli dolazak ${fmtShort(arrival)}, odlazak može biti najkasnije ${fmtShort(next.checkIn)}`
+          : `U tom razdoblju već postoji rezervacija, pa je ${fmtShort(iso)} sada novi dan dolaska`,
       );
       return;
     }
@@ -241,16 +252,22 @@ export function CalendarTab({ bookings, setBookings }: { bookings: Booking[]; se
 
   const save = () =>
     start(async () => {
-      const res = await addBooking(arrival, departure, details);
+      const res = await safeCall(() => addBooking(arrival, departure, details, kind));
+      if (!res) return;
       setBookings(res.bookings);
       if (res.ok) resetSelection();
       else setError(res.error ?? "Greška pri spremanju.");
     });
 
   const remove = (b: Booking) => {
-    if (!confirm(`Obrisati rezervaciju ${fmt(b.checkIn)} – ${fmt(b.checkOut)}? Datumi će ponovno biti slobodni.`)) return;
+    const question =
+      b.kind === "blocked"
+        ? `Otvoriti termin ${fmt(b.checkIn)} – ${fmt(b.checkOut)}? Datumi će ponovno biti slobodni.`
+        : `Obrisati rezervaciju ${fmt(b.checkIn)} – ${fmt(b.checkOut)}? Datumi će ponovno biti slobodni.`;
+    if (!confirm(question)) return;
     start(async () => {
-      const res = await deleteBooking(b.id);
+      const res = await safeCall(() => deleteBooking(b.id));
+      if (!res) return;
       setBookings(res.bookings);
       setOpenedId(null);
       setPopover(null);
@@ -299,7 +316,7 @@ export function CalendarTab({ bookings, setBookings }: { bookings: Booking[]; se
                         openedId === b.id ? "bg-sand" : ""
                       }`}
                     >
-                      <span className="size-3.5 shrink-0 rounded-full" style={{ background: color(b) }} />
+                      <span className="size-3.5 shrink-0 rounded-full" style={{ background: swatch(b) }} />
                       <span className="min-w-0 flex-1 truncate font-medium">{label(b)}</span>
                       <span className="shrink-0 text-xs text-muted">
                         {fmtDayMonth(b.checkIn)}–{fmtDayMonth(b.checkOut)}
@@ -318,24 +335,28 @@ export function CalendarTab({ bookings, setBookings }: { bookings: Booking[]; se
         {popover && popoverBooking && (
           <BookingPopover
             booking={popoverBooking}
-            color={color(popoverBooking)}
+            color={swatch(popoverBooking)}
             style={{ left: popover.left, top: popover.top, width: POPOVER_W }}
             onClose={() => setPopover(null)}
             onEdit={() => {
               setPopover(null);
-              panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+              // Nudge the page just enough that the edit panel's top shows at ~60% of the screen,
+              // keeping most of the calendar in view. No scroll if it's already visible.
+              const top = panelRef.current?.getBoundingClientRect().top;
+              const target = window.innerHeight * 0.6;
+              if (top !== undefined && top > target) window.scrollBy({ top: top - target, behavior: "smooth" });
             }}
           />
         )}
       </div>
 
       {/* Action panel */}
-      <div ref={panelRef} className="scroll-mt-20">
+      <div ref={panelRef}>
         {opened ? (
           <EditBookingPanel
             key={opened.id + opened.checkIn}
             booking={opened}
-            color={color(opened)}
+            color={swatch(opened)}
             pending={pending}
             onClose={() => {
               setOpenedId(null);
@@ -344,8 +365,10 @@ export function CalendarTab({ bookings, setBookings }: { bookings: Booking[]; se
             onSave={(d) =>
               new Promise<boolean>((resolve) =>
                 start(async () => {
-                  const res = await updateBookingDetails(opened.id, d);
+                  const res = await safeCall(() => updateBookingDetails(opened.id, d));
+                  if (!res) return resolve(false);
                   setBookings(res.bookings);
+                  if (!res.ok && res.error) alert(res.error);
                   resolve(res.ok);
                 }),
               )
@@ -374,15 +397,43 @@ export function CalendarTab({ bookings, setBookings }: { bookings: Booking[]; se
               {fmtShort(arrival)} → {fmtShort(departure)}
             </p>
             <p className="text-sm text-muted">{nightsBetween(arrival, departure)} noćenja</p>
-            <DetailsFields value={details} onChange={setDetails} />
+
+            <div className="mt-4 grid grid-cols-2 gap-1 rounded-full bg-stone/70 p-1" role="radiogroup" aria-label="Vrsta">
+              {(
+                [
+                  ["booking", "Rezervacija gosta"],
+                  ["blocked", "Nedostupno"],
+                ] as const
+              ).map(([k, text]) => (
+                <button
+                  key={k}
+                  type="button"
+                  role="radio"
+                  aria-checked={kind === k}
+                  onClick={() => setKind(k)}
+                  className={`rounded-full py-2 text-sm font-semibold ${kind === k ? "bg-paper shadow" : "text-muted"}`}
+                >
+                  {text}
+                </button>
+              ))}
+            </div>
+            {kind === "blocked" && (
+              <p className="mt-2 text-sm text-muted">
+                Za dane kad kuću ne iznajmljujete (obitelj, radovi, izvan sezone). Gosti na stranici vide samo da je zauzeto.
+              </p>
+            )}
+
+            <DetailsFields value={details} onChange={setDetails} noteOnly={kind === "blocked"} />
             {error && <p className="mt-2 font-medium text-terracotta-dark">{error}</p>}
             <button
               onClick={save}
               disabled={pending}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-terracotta py-3.5 text-lg font-semibold text-white disabled:opacity-70"
+              className={`mt-4 flex w-full items-center justify-center gap-2 rounded-full py-3.5 text-lg font-semibold text-white disabled:opacity-70 ${
+                kind === "blocked" ? "bg-ink" : "bg-terracotta"
+              }`}
             >
               {pending && <LoaderCircle className="size-5 animate-spin" />}
-              Označi kao zauzeto
+              {kind === "blocked" ? "Zatvori termin" : "Označi kao zauzeto"}
             </button>
           </Panel>
         )}
@@ -397,7 +448,7 @@ export function CalendarTab({ bookings, setBookings }: { bookings: Booking[]; se
           <ul className="divide-y divide-line rounded-2xl border border-line bg-paper">
             {upcoming.map((b) => (
               <li key={b.id} className="flex items-center gap-3 px-4 py-3">
-                <span className="size-3.5 shrink-0 rounded-full" style={{ background: color(b) }} />
+                <span className="size-3.5 shrink-0 rounded-full" style={{ background: swatch(b) }} />
                 <button
                   type="button"
                   onClick={() => {
@@ -446,7 +497,7 @@ function BookingPopover({
   onClose: () => void;
   onEdit: () => void;
 }) {
-  const named = Boolean(b.guestName || b.guestCountry || b.source);
+  const named = b.kind === "blocked" || Boolean(b.guestName || b.guestCountry || b.source);
   return (
     <div
       data-popover
@@ -524,7 +575,8 @@ function EditBookingPanel({
   return (
     <Panel onClose={onClose}>
       <p className="flex items-center gap-2 text-sm text-muted">
-        <span className="size-3 rounded-full" style={{ background: color }} /> Rezervacija
+        <span className="size-3 rounded-full" style={{ background: color }} />{" "}
+        {booking.kind === "blocked" ? "Nedostupno (zatvoreno)" : "Rezervacija"}
       </p>
       <p className="mt-1 text-lg font-semibold">
         {fmtShort(booking.checkIn)} → {fmtShort(booking.checkOut)}
@@ -533,6 +585,7 @@ function EditBookingPanel({
 
       <DetailsFields
         value={draft}
+        noteOnly={booking.kind === "blocked"}
         onChange={(d) => {
           setDraft(d);
           setSaved(false);
@@ -552,16 +605,33 @@ function EditBookingPanel({
         disabled={pending}
         className="mt-3 flex w-full items-center justify-center gap-2 rounded-full border-2 border-terracotta py-3 font-semibold text-terracotta-dark"
       >
-        <Trash2 className="size-5" /> Obriši (oslobodi datume)
+        <Trash2 className="size-5" /> {booking.kind === "blocked" ? "Otvori termin (oslobodi datume)" : "Obriši (oslobodi datume)"}
       </button>
     </Panel>
   );
 }
 
 /** Optional guest fields, shared by "new booking" and "edit booking". */
-function DetailsFields({ value: d, onChange }: { value: BookingDetails; onChange: (d: BookingDetails) => void }) {
+function DetailsFields({
+  value: d,
+  onChange,
+  noteOnly = false,
+}: {
+  value: BookingDetails;
+  onChange: (d: BookingDetails) => void;
+  noteOnly?: boolean;
+}) {
   const set = <K extends keyof BookingDetails>(key: K, v: BookingDetails[K]) => onChange({ ...d, [key]: v });
   const field = "mt-1 w-full rounded-xl border border-line bg-white px-3.5 py-2.5 font-normal outline-none focus:border-sea";
+
+  if (noteOnly) {
+    return (
+      <label className="mt-4 block text-sm font-medium">
+        Bilješka (neobavezno)
+        <input value={d.note} onChange={(e) => set("note", e.target.value)} placeholder="npr. obitelj, radovi" className={field} />
+      </label>
+    );
+  }
 
   return (
     <div className="mt-4">

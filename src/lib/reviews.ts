@@ -3,7 +3,7 @@
 // Vrbo (https://www.vrbo.com/en-gb/p4364367): quotes verbatim in the guest's language
 // (only obvious typos fixed).
 //
-// Airbnb (https://www.airbnb.com/rooms/1681296825413855210): the listing shows Airbnb's automatic
+// Airbnb (https://www.airbnb.com/rooms/16154620): the listing shows Airbnb's automatic
 // Croatian translation. `hr` is that text (excerpts ending at a sentence); the other languages are
 // faithful translations of it. Replace with the guests' original wording when available.
 

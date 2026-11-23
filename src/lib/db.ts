@@ -21,7 +21,8 @@ export type { Booking, BookingDetails, DayPrice };
 interface Store {
   listBookings(): Promise<Booking[]>;
   addBooking(b: Omit<Booking, "id">): Promise<void>;
-  updateBookingDetails(id: string, d: BookingDetails): Promise<void>;
+  /** False if no booking has this id (e.g. deleted on another device). */
+  updateBookingDetails(id: string, d: BookingDetails): Promise<boolean>;
   deleteBooking(id: string): Promise<void>;
   listDayPrices(): Promise<DayPrice[]>;
   /** Set the same price on each of these days. */
@@ -52,11 +53,12 @@ function postgresStore(url: string): Store {
           source: string | null;
           guests: number | null;
           phone: string | null;
+          kind: string | null;
         }[]
       >`
         select id, to_char(check_in, 'YYYY-MM-DD') as check_in,
                to_char(check_out, 'YYYY-MM-DD') as check_out,
-               note, guest_name, guest_country, source, guests, phone
+               note, guest_name, guest_country, source, guests, phone, kind
         from bookings order by check_in`;
       return rows.map((r) => ({
         id: r.id,
@@ -68,17 +70,19 @@ function postgresStore(url: string): Store {
         source: r.source ?? "",
         guests: r.guests,
         phone: r.phone ?? "",
+        kind: r.kind === "blocked" ? "blocked" : "booking",
       }));
     },
     async addBooking(b) {
-      await sql`insert into bookings (check_in, check_out, note, guest_name, guest_country, source, guests, phone)
+      await sql`insert into bookings (check_in, check_out, note, guest_name, guest_country, source, guests, phone, kind)
                 values (${b.checkIn}, ${b.checkOut}, ${b.note}, ${b.guestName}, ${b.guestCountry},
-                        ${b.source}, ${b.guests}, ${b.phone})`;
+                        ${b.source}, ${b.guests}, ${b.phone}, ${b.kind})`;
     },
     async updateBookingDetails(id, d) {
-      await sql`update bookings set note = ${d.note}, guest_name = ${d.guestName},
+      const rows = await sql`update bookings set note = ${d.note}, guest_name = ${d.guestName},
                 guest_country = ${d.guestCountry}, source = ${d.source}, guests = ${d.guests}, phone = ${d.phone}
-                where id = ${id}`;
+                where id = ${id} returning id`;
+      return rows.length > 0;
     },
     async deleteBooking(id) {
       await sql`delete from bookings where id = ${id}`;
@@ -127,7 +131,10 @@ function fileStore(): Store {
   return {
     async listBookings() {
       // Older dev files have bookings without the guest fields: fill in defaults.
-      return (await load()).bookings.map((b) => ({ ...emptyDetails, ...b })).sort(byDate((b) => b.checkIn));
+      return (await load()).bookings
+        // Older dev files have no `kind`: those are guest bookings.
+        .map((b) => ({ ...emptyDetails, ...b, kind: (b.kind ?? "booking") as Booking["kind"] }))
+        .sort(byDate((b) => b.checkIn));
     },
     async addBooking(b) {
       const data = await load();
@@ -136,8 +143,10 @@ function fileStore(): Store {
     },
     async updateBookingDetails(id, d) {
       const data = await load();
+      if (!data.bookings.some((b) => b.id === id)) return false;
       data.bookings = data.bookings.map((b) => (b.id === id ? { ...b, ...d } : b));
       await save(data);
+      return true;
     },
     async deleteBooking(id) {
       const data = await load();

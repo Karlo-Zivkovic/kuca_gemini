@@ -116,6 +116,44 @@ body {
   cursor: not-allowed;
 }
 
+/* ---- Choosing a stay (public calendar) ---- */
+
+/* The chosen arrival day (or both ends of a stay) is filled, not just outlined. */
+.vg-calendar .rdp-selected:not(.rdp-range_middle) .rdp-day_button {
+  background: var(--color-sea);
+  border-color: var(--color-sea);
+  color: #fff;
+}
+
+/* After the arrival is chosen: days the stay can end on get a soft outline… */
+.vg-calendar .vg-can-depart .rdp-day_button {
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--color-sea) 40%, transparent);
+}
+/* …including the next booking's arrival day: guests can still leave that morning. */
+.vg-calendar .vg-booked.vg-can-depart .rdp-day_button {
+  text-decoration: none;
+  cursor: pointer;
+  color: var(--color-ink);
+}
+/* …and days past the next booking fade out. */
+.vg-calendar .vg-cannot-depart .rdp-day_button {
+  opacity: 0.4;
+}
+/* Free days where a stay can't start (too few nights before the next booking). */
+.vg-calendar .vg-no-arrival:not(.vg-booked) .rdp-day_button {
+  opacity: 0.4;
+}
+
+/* Hover preview (desktop): the stay as it would be up to the day under the mouse. */
+.vg-calendar .vg-preview:not(.rdp-selected) .rdp-day_button {
+  background: var(--color-sea-light);
+  box-shadow: none;
+}
+.vg-calendar .vg-preview-bad .rdp-day_button {
+  outline: 2px dashed color-mix(in srgb, var(--color-terracotta) 70%, transparent);
+  outline-offset: -2px;
+}
+
 .vg-calendar .vg-past .rdp-day_button {
   opacity: 0.35;
   text-decoration: none;

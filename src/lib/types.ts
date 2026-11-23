@@ -10,8 +10,12 @@ export type BookingDetails = {
   note: string; // free text
 };
 
+/** 'booking' = a guest stay; 'blocked' = dates closed by the owners (no guest). */
+export type BookingKind = "booking" | "blocked";
+
 export type Booking = BookingDetails & {
   id: string;
+  kind: BookingKind;
   checkIn: string; // ISO date, first night
   checkOut: string; // ISO date, departure morning (not a booked night)
 };

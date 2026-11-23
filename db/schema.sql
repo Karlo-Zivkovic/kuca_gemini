@@ -19,6 +19,11 @@ alter table bookings add column if not exists phone         text    not null def
 alter table bookings drop constraint if exists bookings_guests_ok;
 alter table bookings add constraint bookings_guests_ok check (guests is null or guests between 1 and 50);
 
+-- 'booking' = guest stay, 'blocked' = closed by the owners (see db/migrations/003_booking_kind.sql).
+alter table bookings add column if not exists kind text not null default 'booking';
+alter table bookings drop constraint if exists bookings_kind_ok;
+alter table bookings add constraint bookings_kind_ok check (kind in ('booking', 'blocked'));
+
 create index if not exists bookings_check_in_idx on bookings (check_in);
 
 -- Price per night for the whole villa; days without a row are "price on request".
