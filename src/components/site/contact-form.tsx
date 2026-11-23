@@ -100,8 +100,16 @@ function InquiryForm({ t, lang, onSent }: { t: Dict; lang: Locale; onSent: () =>
         <Field label={c.email}>
           <input name="email" type="email" required autoComplete="email" className={input} aria-invalid={invalid("email")} />
         </Field>
-        <Field label={c.phone} hint={c.phoneHint}>
-          <input name="phone" type="tel" autoComplete="tel" className={input} aria-invalid={invalid("phone")} />
+        <Field label={c.phone} hint={invalid("phone") ? undefined : c.phoneHint} error={invalid("phone") ? c.phoneInvalid : undefined}>
+          <input
+            name="phone"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            placeholder={c.phonePlaceholder}
+            className={input}
+            aria-invalid={invalid("phone")}
+          />
         </Field>
         <Field label={c.arrival}>
           <input
@@ -166,12 +174,25 @@ function InquiryForm({ t, lang, onSent }: { t: Dict; lang: Locale; onSent: () =>
   );
 }
 
-function Field({ label, hint, className = "", children }: { label: string; hint?: string; className?: string; children: ReactNode }) {
+function Field({
+  label,
+  hint,
+  error,
+  className = "",
+  children,
+}: {
+  label: string;
+  hint?: string;
+  error?: string;
+  className?: string;
+  children: ReactNode;
+}) {
   return (
     <label className={`block text-sm font-medium ${className}`}>
       {label}
       {children}
       {hint && <span className="mt-1 block text-xs font-normal text-muted">{hint}</span>}
+      {error && <span className="mt-1 block text-xs font-medium text-terracotta-dark">{error}</span>}
     </label>
   );
 }

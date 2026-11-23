@@ -1,5 +1,6 @@
 "use server";
 
+import { parsePhoneNumberFromString } from "libphonenumber-js/max";
 import { sendInquiryEmail } from "@/lib/email";
 import { isIsoDate } from "@/lib/dates";
 import { hasLocale } from "@/lib/i18n";
@@ -23,10 +24,16 @@ export async function sendInquiry(_prev: InquiryState, fd: FormData): Promise<In
   }
 
   const lang = str(fd, "lang", 5);
+
+  // Phone is optional, but if given it must be a real number with its country code (+ or 00),
+  // because the owner's "reply on WhatsApp" button dials exactly this number.
+  const rawPhone = str(fd, "phone", 40);
+  const parsedPhone = rawPhone ? parsePhoneNumberFromString(rawPhone.replace(/^\s*00/, "+")) : undefined;
+  const phoneOk = !rawPhone || Boolean(parsedPhone?.isValid());
   const q = {
     name: str(fd, "name", 100),
     email: str(fd, "email", 200),
-    phone: str(fd, "phone", 40),
+    phone: parsedPhone?.isValid() ? parsedPhone.formatInternational() : "", // e.g. "+385 95 582 3724"
     arrival: str(fd, "arrival", 10),
     departure: str(fd, "departure", 10),
     adults: int(fd, "adults", 1, 14),
@@ -39,7 +46,7 @@ export async function sendInquiry(_prev: InquiryState, fd: FormData): Promise<In
   const bad: string[] = [];
   if (q.name.length < 2) bad.push("name");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(q.email)) bad.push("email");
-  if (q.phone && !/^[+\d][\d\s()./-]{5,}$/.test(q.phone)) bad.push("phone");
+  if (!phoneOk) bad.push("phone");
   if (q.arrival && !isIsoDate(q.arrival)) bad.push("arrival");
   if (q.departure && (!isIsoDate(q.departure) || q.departure <= q.arrival)) bad.push("departure");
   if (fd.get("privacy") !== "on") bad.push("privacy");
