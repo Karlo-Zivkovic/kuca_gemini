@@ -259,7 +259,7 @@ const en = {
     exceptional: "Exceptional",
     guestFavourite: "Guest favourite",
     on: "on",
-    reviewsCount: "{n} reviews",
+    reviewsCount: { one: "{n} review", few: "{n} reviews", other: "{n} reviews" },
     readAllOn: "Read all reviews on",
     hostLabel: "Your host",
     hostName: "Fanica",
@@ -280,6 +280,7 @@ const en = {
     departure: "Departure",
     nights: "nights",
     night: "night",
+    nightsFew: "nights",
     clear: "Clear",
     continue: "Inquire about these dates",
     conflict: "Those dates include booked nights. Please pick another range.",
@@ -305,6 +306,7 @@ const en = {
       "Price is for the whole villa, up to 14 guests.",
       "Includes bed linen, towels, electricity, Wi-Fi and final cleaning.",
       "Tourist tax is included in the price.",
+      "A refundable security deposit of €400 is paid to the owners on arrival and returned on departure if everything is in order.",
     ],
   },
   times: {
@@ -355,7 +357,7 @@ const en = {
       },
       {
         q: "How do I book and pay?",
-        a: "Send us an inquiry with your dates. We'll confirm availability and send you an offer. A deposit confirms the booking and the rest is paid before or on arrival.",
+        a: "Send us an inquiry with your dates. We'll confirm availability and send you an offer. An advance payment confirms the booking and the rest is paid before or on arrival.",
       },
       {
         q: "Is smoking allowed?",

@@ -260,7 +260,7 @@ const no: Dict = {
     exceptional: "Enestående",
     guestFavourite: "Gjestefavoritt",
     on: "på",
-    reviewsCount: "{n} omtaler",
+    reviewsCount: { one: "{n} omtale", few: "{n} omtaler", other: "{n} omtaler" },
     readAllOn: "Les alle omtalene på",
     hostLabel: "Din vert",
     hostName: "Fanica",
@@ -281,6 +281,7 @@ const no: Dict = {
     departure: "Avreise",
     nights: "netter",
     night: "natt",
+    nightsFew: "netter",
     clear: "Nullstill",
     continue: "Send forespørsel for disse datoene",
     conflict: "De valgte datoene inkluderer opptatte netter. Velg en annen periode.",
@@ -305,6 +306,7 @@ const no: Dict = {
       "Prisen gjelder hele villaen, opptil 14 gjester.",
       "Inkluderer sengetøy, håndklær, strøm, Wi-Fi og sluttrengjøring.",
       "Turistskatt er inkludert i prisen.",
+      "Et depositum på 400 € betales til eierne ved ankomst og betales tilbake ved avreise hvis alt er i orden.",
     ],
   },
   times: {
@@ -355,7 +357,7 @@ const no: Dict = {
       },
       {
         q: "Hvordan bestiller og betaler jeg?",
-        a: "Send oss en forespørsel med datoene dine. Vi bekrefter ledighet og sender et tilbud. Et depositum bekrefter bestillingen, og resten betales før eller ved ankomst.",
+        a: "Send oss en forespørsel med datoene dine. Vi bekrefter ledighet og sender et tilbud. Et forskudd bekrefter bestillingen, og resten betales før eller ved ankomst.",
       },
       {
         q: "Er røyking tillatt?",

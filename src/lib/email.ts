@@ -17,6 +17,9 @@ export type Inquiry = {
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
+/** "1 noćenje", "2 noćenja", "21 noćenje": Croatian plural rules. */
+const nightsHr = (n: number) => `${n} ${new Intl.PluralRules("hr-HR").select(n) === "one" ? "noćenje" : "noćenja"}`;
+
 /** "hrvatski", "poljski", … (a full name: Gmail translated the bare code "HR" as "Human Resources"). */
 const languageName = (code: string) => {
   try {
@@ -37,7 +40,7 @@ export function inquiryEmailHtml(q: Inquiry, dates: string, waLink: string) {
     ["E-mail", `<a href="mailto:${esc(q.email)}" style="color:#0f4c5c">${esc(q.email)}</a>`],
     ["Telefon", q.phone ? `${esc(q.phone)}${waLink ? ` · <a href="${waLink}" style="color:#0f4c5c">WhatsApp</a>` : ""}` : "–"],
     ["Datumi", esc(dates)],
-    ["Gosti", `${q.adults} odraslih, ${q.children} djece${q.pets ? ", dolaze sa psom 🐕" : ""}`],
+    ["Gosti", `odrasli: ${q.adults}, djeca: ${q.children}${q.pets ? ", dolaze sa psom 🐕" : ""}`],
     ["Jezik stranice", esc(languageName(q.lang))],
   ];
   const wrap = "overflow-wrap:anywhere;word-break:break-word";
@@ -86,7 +89,7 @@ export async function sendInquiryEmail(q: Inquiry): Promise<boolean> {
 
   const hasDates = q.arrival && q.departure;
   const dates = hasDates
-    ? `${formatDate(q.arrival, "hr-HR")} – ${formatDate(q.departure, "hr-HR")} (${nightsBetween(q.arrival, q.departure)} noćenja)`
+    ? `${formatDate(q.arrival, "hr-HR")} – ${formatDate(q.departure, "hr-HR")} (${nightsHr(nightsBetween(q.arrival, q.departure))})`
     : "nisu navedeni";
   const phoneDigits = q.phone.replace(/[^\d]/g, "");
   const waLink = phoneDigits ? `https://wa.me/${phoneDigits}` : "";

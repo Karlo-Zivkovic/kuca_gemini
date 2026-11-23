@@ -5,7 +5,7 @@ import { DayButton, DayPicker, type DayButtonProps } from "react-day-picker";
 import { hr } from "react-day-picker/locale";
 import "react-day-picker/style.css";
 import { addMonths, endOfMonth, startOfMonth } from "date-fns";
-import { ChevronDown, LoaderCircle, Phone, Trash2, Users, X } from "lucide-react";
+import { LoaderCircle, Phone, Trash2, Users, X } from "lucide-react";
 import { rangeHasBookedNight, useMediaQuery, useToday } from "@/lib/calendar";
 import { formatDate, fromIso, nightsBetween, toIso } from "@/lib/dates";
 import { emptyDetails, type Booking, type BookingDetails, type BookingKind } from "@/lib/types";
@@ -143,7 +143,6 @@ export function CalendarTab({ bookings, setBookings }: { bookings: Booking[]; se
   const [error, setError] = useState("");
   const [pending, start] = useTransition();
   const cardRef = useRef<HTMLDivElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
 
   const colors = useMemo(() => assignColors(bookings), [bookings]);
   const color = (b: Booking) => (b.kind === "blocked" ? BLOCKED_COLOR : (colors.get(b.id) ?? PALETTE[0]));
@@ -338,20 +337,12 @@ export function CalendarTab({ bookings, setBookings }: { bookings: Booking[]; se
             color={swatch(popoverBooking)}
             style={{ left: popover.left, top: popover.top, width: POPOVER_W }}
             onClose={() => setPopover(null)}
-            onEdit={() => {
-              setPopover(null);
-              // Nudge the page just enough that the edit panel's top shows at ~60% of the screen,
-              // keeping most of the calendar in view. No scroll if it's already visible.
-              const top = panelRef.current?.getBoundingClientRect().top;
-              const target = window.innerHeight * 0.6;
-              if (top !== undefined && top > target) window.scrollBy({ top: top - target, behavior: "smooth" });
-            }}
           />
         )}
       </div>
 
       {/* Action panel */}
-      <div ref={panelRef}>
+      <div>
         {opened ? (
           <EditBookingPanel
             key={opened.id + opened.checkIn}
@@ -489,13 +480,11 @@ function BookingPopover({
   color,
   style,
   onClose,
-  onEdit,
 }: {
   booking: Booking;
   color: string;
   style: React.CSSProperties;
   onClose: () => void;
-  onEdit: () => void;
 }) {
   const named = b.kind === "blocked" || Boolean(b.guestName || b.guestCountry || b.source);
   return (
@@ -541,12 +530,6 @@ function BookingPopover({
         </dl>
       )}
 
-      <button
-        onClick={onEdit}
-        className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-full border border-line py-2 text-sm font-semibold hover:bg-sand"
-      >
-        Uredi podatke <ChevronDown className="size-4" />
-      </button>
     </div>
   );
 }

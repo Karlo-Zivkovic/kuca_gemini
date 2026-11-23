@@ -84,6 +84,12 @@ export function SectionHeading({ kicker, title, children }: { kicker: string; ti
   );
 }
 
+/** Picks the right plural form ("23 recenzije", "16 recenzija") using the language's own rules. */
+function plural(tag: string, n: number, forms: { one: string; few: string; other: string }) {
+  const form = new Intl.PluralRules(tag).select(n);
+  return form === "one" ? forms.one : form === "few" ? forms.few : forms.other;
+}
+
 /* --------------------------------- Hero --------------------------------- */
 
 export function Hero({ t }: { t: Dict }) {
@@ -156,7 +162,7 @@ export function Facts({ t }: { t: Dict["facts"] }) {
 /* --------------------------------- About -------------------------------- */
 
 // Photos stacked beside the villa text.
-const aboutPhotos = ["078", "051", "019"];
+const aboutPhotos = ["078", "051", "066"];
 
 // Icon keys used by `amenities.groups[].items[].icon` in the dictionaries.
 const amenityIcons: Record<string, LucideIcon> = {
@@ -364,7 +370,7 @@ export function Reviews({ t, lang }: { t: Dict["reviews"]; lang: Locale }) {
                   <span className="mt-1 block text-sm text-white/80">
                     {r.label} {t.on} {r.name}
                   </span>
-                  <span className="block text-xs text-white/60">{t.reviewsCount.replace("{n}", String(r.count))}</span>
+                  <span className="block text-xs text-white/60">{plural(localeTag[lang], r.count, t.reviewsCount).replace("{n}", String(r.count))}</span>
                 </span>
               </div>
             ))}

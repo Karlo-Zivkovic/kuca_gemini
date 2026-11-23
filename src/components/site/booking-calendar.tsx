@@ -147,7 +147,11 @@ export function BookingCalendar({
   const priced = nightPrices.length;
   const unpriced = nights - priced;
   const samePrice = priced > 0 && nightPrices.every((p) => p === nightPrices[0]);
-  const nightsWord = (n: number) => (new Intl.PluralRules(tag).select(n) === "one" ? t.night : t.nights);
+  // one / few (2–4, e.g. pl "2 noce", cs "3 noci") / everything else ("5 nocy").
+  const nightsWord = (n: number) => {
+    const form = new Intl.PluralRules(tag).select(n);
+    return form === "one" ? t.night : form === "few" ? t.nightsFew : t.nights;
+  };
 
   return (
     <div>
