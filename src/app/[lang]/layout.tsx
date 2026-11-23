@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Playfair_Display, Manrope } from "next/font/google";
 import "../globals.css";
 import { getDict, hasLocale, locales, localeTag } from "@/lib/i18n";
-import { heroPhoto, photoSrc, site } from "@/lib/config";
+import { HERO_H, HERO_W, heroSrc, site } from "@/lib/config";
 import { Analytics } from "@/components/site/analytics";
 import { ConsentBanner } from "@/components/site/consent-banner";
 
@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: LayoutProps<"/[lang]">): Prom
       title: t.meta.title,
       description: t.meta.description,
       locale: localeTag[lang].replace("-", "_"),
-      images: [{ url: photoSrc(heroPhoto), width: 2144, height: 992, alt: t.gallery.alts[heroPhoto] }],
+      images: [{ url: heroSrc, width: HERO_W, height: HERO_H, alt: t.gallery.heroAlt }],
     },
   };
 }

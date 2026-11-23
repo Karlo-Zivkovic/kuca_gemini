@@ -3,7 +3,8 @@
 import Image from "next/image";
 import { useState } from "react";
 import { MapPin } from "lucide-react";
-import { photoSrc, site } from "@/lib/config";
+import { site } from "@/lib/config";
+import { gallerySrc } from "@/lib/photos";
 import { useConsent } from "@/lib/consent";
 
 /** Google Maps iframe, loaded only after cookie consent or an explicit click. */
@@ -24,7 +25,7 @@ export function MapEmbed({ showLabel, note, title }: { showLabel: string; note: 
         />
       ) : (
         <>
-          <Image src={photoSrc("house-blue-hour")} alt="" fill sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover opacity-40 blur-[2px]" />
+          <Image src={gallerySrc("079")} alt="" fill sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover opacity-40 blur-[2px]" />
           <div className="absolute inset-0 grid place-items-center p-6 text-center">
             <div>
               <button

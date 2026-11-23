@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { ExternalLink } from "lucide-react";
-import { galleryPhotos, heroPhoto, photoSrc, site } from "@/lib/config";
+import { heroSrc, site } from "@/lib/config";
+import { gallerySrc, photos } from "@/lib/photos";
 import { getPublicAvailability, getPublicDayPrices } from "@/lib/data";
 import { getDict, hasLocale, localeTag, type Dict, type Locale } from "@/lib/i18n";
 import { BookingProvider } from "@/components/site/booking-context";
@@ -30,7 +31,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
         <section id="gallery" className="bg-paper py-14 sm:py-18">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <SectionHeading kicker={t.gallery.kicker} title={t.gallery.title} />
-            <Gallery photos={galleryPhotos} t={t.gallery} />
+            <Gallery t={t.gallery} />
           </div>
         </section>
 
@@ -120,7 +121,7 @@ function JsonLd({ t, lang }: { t: Dict; lang: Locale }) {
     name: site.name,
     description: t.meta.description,
     url: `${site.url}/${lang}`,
-    image: [`${site.url}${photoSrc(heroPhoto)}`, ...galleryPhotos.slice(0, 5).map((p) => `${site.url}${photoSrc(p)}`)],
+    image: [`${site.url}${heroSrc}`, ...photos.slice(0, 5).map((p) => `${site.url}${gallerySrc(p.id)}`)],
     telephone: site.phone,
     inLanguage: localeTag[lang],
     address: {

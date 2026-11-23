@@ -43,3 +43,6 @@ next-env.d.ts
 
 # local dev database
 /.data
+
+# original photos (processed copies live in public/photos)
+/Web stranica/

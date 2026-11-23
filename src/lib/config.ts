@@ -54,50 +54,7 @@ export const site = {
   gaId: process.env.NEXT_PUBLIC_GA_ID ?? "",
 } as const;
 
-export type PhotoId =
-  | "pool-dusk-house"
-  | "pool-house-evening"
-  | "house-blue-hour"
-  | "pool-house-day"
-  | "terrace-pool-sunset"
-  | "pergola-pool-sunset"
-  | "pergola-pool-night"
-  | "hot-tub-lounge"
-  | "hot-tub-playground"
-  | "hot-tub-garden"
-  | "lounge-sunset"
-  | "terrace-stairs"
-  | "terrace-flowers"
-  | "dinner-party"
-  | "breakfast-couple"
-  | "dinner-couple"
-  | "pool-sunset-dog"
-  | "pool-dog-house"
-  | "dog-pool-steps";
-
-export const heroPhoto: PhotoId = "pool-dusk-house";
-
-// Order shown in the gallery (keep the count a multiple of 5 for the mosaic).
-// Interior photos get added here when they arrive.
-export const galleryPhotos: PhotoId[] = [
-  "pool-house-evening",
-  "terrace-pool-sunset",
-  "hot-tub-lounge",
-  "pergola-pool-sunset",
-  "dinner-party",
-  "hot-tub-playground",
-  "lounge-sunset",
-  "pergola-pool-night",
-  "breakfast-couple",
-  "house-blue-hour",
-  "terrace-stairs",
-  "hot-tub-garden",
-  "pool-sunset-dog",
-  "dinner-couple",
-  "pool-dog-house",
-];
-
-export const photoSrc = (id: PhotoId) => `/photos/${id}.webp`;
-// All source photos are ~2.16:1.
-export const PHOTO_W = 2144;
-export const PHOTO_H = 992;
+// Hero photo (top of the page and social previews). Gallery photos live in src/lib/photos.ts.
+export const heroSrc = "/photos/pool-dusk-house.webp";
+export const HERO_W = 2144;
+export const HERO_H = 992;

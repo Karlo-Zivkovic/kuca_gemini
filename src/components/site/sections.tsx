@@ -65,7 +65,8 @@ import {
   Wifi,
   type LucideIcon,
 } from "lucide-react";
-import { heroPhoto, PHOTO_H, PHOTO_W, photoSrc, site } from "@/lib/config";
+import { heroSrc, site } from "@/lib/config";
+import { gallerySrc, hostPhoto, photoById } from "@/lib/photos";
 import { localeTag, type Dict, type Locale } from "@/lib/i18n";
 import { reviewsFor } from "@/lib/reviews";
 import { WhatsAppLink } from "./whatsapp";
@@ -88,8 +89,8 @@ export function Hero({ t }: { t: Dict }) {
   return (
     <section className="relative isolate flex min-h-[92svh] items-end overflow-hidden text-white">
       <Image
-        src={photoSrc(heroPhoto)}
-        alt={t.gallery.alts[heroPhoto]}
+        src={heroSrc}
+        alt={t.gallery.heroAlt}
         fill
         priority
         sizes="100vw"
@@ -152,6 +153,9 @@ export function Facts({ t }: { t: Dict["facts"] }) {
 }
 
 /* --------------------------------- About -------------------------------- */
+
+// Photos stacked beside the villa text.
+const aboutPhotos = ["078", "051", "019"];
 
 // Icon keys used by `amenities.groups[].items[].icon` in the dictionaries.
 const amenityIcons: Record<string, LucideIcon> = {
@@ -243,31 +247,22 @@ export function About({ t }: { t: Dict }) {
             ))}
           </div>
         </div>
-        <div className="grid grid-cols-5 grid-rows-2 gap-3">
-          <Image
-            src={photoSrc("dinner-party")}
-            alt={t.gallery.alts["dinner-party"]}
-            width={PHOTO_W}
-            height={PHOTO_H}
-            sizes="(min-width: 1024px) 560px, 100vw"
-            className="col-span-5 aspect-[2/1] h-auto w-full rounded-2xl object-cover"
-          />
-          <Image
-            src={photoSrc("hot-tub-lounge")}
-            alt={t.gallery.alts["hot-tub-lounge"]}
-            width={PHOTO_W}
-            height={PHOTO_H}
-            sizes="(min-width: 1024px) 320px, 60vw"
-            className="col-span-3 aspect-[4/3] h-full w-full rounded-2xl object-cover"
-          />
-          <Image
-            src={photoSrc("pool-sunset-dog")}
-            alt={t.gallery.alts["pool-sunset-dog"]}
-            width={PHOTO_W}
-            height={PHOTO_H}
-            sizes="(min-width: 1024px) 220px, 40vw"
-            className="col-span-2 aspect-[3/4] h-full w-full rounded-2xl object-cover object-[80%_50%]"
-          />
+        {/* Wide photos stacked beside the text (kept at their natural shape, so they stay sharp) */}
+        <div className="flex flex-col gap-3">
+          {aboutPhotos.map((id) => {
+            const p = photoById(id);
+            return (
+              <Image
+                key={id}
+                src={gallerySrc(id)}
+                alt={t.gallery.subjects[p.subject]}
+                width={p.w}
+                height={p.h}
+                sizes="(min-width: 1024px) 560px, 100vw"
+                className="h-auto w-full rounded-2xl"
+              />
+            );
+          })}
         </div>
       </div>
 
@@ -375,27 +370,47 @@ export function Reviews({ t, lang }: { t: Dict["reviews"]; lang: Locale }) {
           </div>
         </div>
 
-        {/* Real guest quotes */}
-        <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {reviewsFor(lang).map((r) => (
-            <li key={r.name} className="flex flex-col rounded-2xl bg-white/5 p-6 ring-1 ring-white/10 max-sm:nth-[n+4]:hidden">
-              <Quote className="size-7 text-[#f0b89c]" aria-hidden />
-              <blockquote lang={r.lang} className="mt-3 flex-1">
-                {r.title && <p className="font-serif text-xl font-semibold leading-snug">{r.title}</p>}
-                <p className={`leading-relaxed text-white/85 ${r.title ? "mt-2" : "font-serif text-xl font-semibold leading-snug text-white"}`}>
-                  “{r.quote}”
-                </p>
-              </blockquote>
-              <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4 text-sm">
-                <span className="font-semibold">{r.name}</span>
-                <span className="flex items-center gap-2 text-white/60">
-                  {stars}
-                  {r.source}
-                </span>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <div className="mt-10 grid gap-6 lg:grid-cols-[minmax(0,19rem)_1fr]">
+          {/* The host: small round photo on phones, tall card on desktop */}
+          <figure className="flex items-center gap-4 lg:block">
+            <div className="relative size-24 shrink-0 overflow-hidden rounded-full ring-2 ring-white/20 lg:aspect-[3/4] lg:size-auto lg:w-full lg:rounded-2xl lg:ring-1 lg:ring-white/10">
+              <Image
+                src={gallerySrc(hostPhoto.id)}
+                alt={t.hostAlt}
+                fill
+                sizes="(min-width: 1024px) 304px, 96px"
+                className="object-cover object-[50%_40%]"
+              />
+            </div>
+            <figcaption className="lg:mt-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#f0b89c]">{t.hostLabel}</p>
+              <p className="mt-1 font-serif text-2xl font-semibold">{t.hostName}</p>
+              <p className="mt-1 text-sm leading-relaxed text-white/75">{t.hostNote}</p>
+            </figcaption>
+          </figure>
+
+          {/* Real guest quotes */}
+          <ul className="grid gap-4 sm:grid-cols-2">
+            {reviewsFor(lang).map((r) => (
+              <li key={r.name} className="flex flex-col rounded-2xl bg-white/5 p-6 ring-1 ring-white/10 max-sm:nth-[n+4]:hidden">
+                <Quote className="size-7 text-[#f0b89c]" aria-hidden />
+                <blockquote lang={r.lang} className="mt-3 flex-1">
+                  {r.title && <p className="font-serif text-xl font-semibold leading-snug">{r.title}</p>}
+                  <p className={`leading-relaxed text-white/85 ${r.title ? "mt-2" : "font-serif text-xl font-semibold leading-snug text-white"}`}>
+                    “{r.quote}”
+                  </p>
+                </blockquote>
+                <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4 text-sm">
+                  <span className="font-semibold">{r.name}</span>
+                  <span className="flex items-center gap-2 text-white/60">
+                    {stars}
+                    {r.source}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
 
       </div>
     </section>

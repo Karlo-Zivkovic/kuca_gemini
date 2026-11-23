@@ -3,26 +3,36 @@
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import { PHOTO_H, PHOTO_W, photoSrc, type PhotoId } from "@/lib/config";
+import type { Dict } from "@/lib/i18n";
+import { gallerySrc, photos, subjectCategory, type PhotoCategory } from "@/lib/photos";
 import { track } from "@/lib/consent";
 
-type Labels = { close: string; prev: string; next: string; of: string; alts: Record<PhotoId, string> };
+type Filter = "all" | PhotoCategory;
+const filters: Filter[] = ["all", "outdoor", "living", "bedrooms", "bathrooms"];
+const PREVIEW = 10; // photos shown before "show all" (two mosaic blocks of 5)
 
-export function Gallery({ photos, t }: { photos: PhotoId[]; t: Labels }) {
+export function Gallery({ t }: { t: Dict["gallery"] }) {
+  const [filter, setFilter] = useState<Filter>("all");
+  const [expanded, setExpanded] = useState(false);
   const [index, setIndex] = useState<number | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const touchX = useRef<number | null>(null);
+
+  const list = filter === "all" ? photos : photos.filter((p) => subjectCategory[p.subject] === filter);
+  const visible = expanded ? list : list.slice(0, PREVIEW);
+  const alt = (i: number) => t.subjects[list[i].subject];
+  const label = (f: Filter) => (f === "all" ? t.all : t.categories[f]);
+  const count = (f: Filter) => (f === "all" ? photos.length : photos.filter((p) => subjectCategory[p.subject] === f).length);
 
   const open = (i: number) => {
     setIndex(i);
     dialogRef.current?.showModal();
-    track("gallery_open", { photo: photos[i] });
+    track("gallery_open", { photo: list[i].id });
   };
   const close = () => dialogRef.current?.close();
-  const step = useCallback(
-    (d: number) => setIndex((i) => (i === null ? i : (i + d + photos.length) % photos.length)),
-    [photos.length],
-  );
+  const total = list.length;
+  const step = useCallback((d: number) => setIndex((i) => (i === null ? i : (i + d + total) % total)), [total]);
 
   useEffect(() => {
     if (index === null) return;
@@ -38,12 +48,34 @@ export function Gallery({ photos, t }: { photos: PhotoId[]; t: Labels }) {
   const big = (i: number) => i % 5 === 0;
   const bigRight = (i: number) => big(i) && Math.floor(i / 5) % 2 === 1;
 
+  const current = index !== null ? list[index] : null;
+
   return (
-    <>
-      <div className="grid grid-flow-row-dense auto-rows-[9rem] grid-cols-2 gap-2 sm:auto-rows-[11rem] sm:gap-3 md:grid-cols-4">
-        {photos.map((id, i) => (
+    <div ref={rootRef}>
+      <div role="tablist" aria-label={t.title} className="mb-6 flex flex-wrap justify-center gap-2">
+        {filters.map((f) => (
           <button
-            key={id}
+            key={f}
+            type="button"
+            role="tab"
+            aria-selected={filter === f}
+            onClick={() => {
+              setFilter(f);
+              setExpanded(false);
+            }}
+            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+              filter === f ? "bg-sea text-white shadow" : "bg-stone/70 text-ink hover:bg-stone"
+            }`}
+          >
+            {label(f)} <span className={filter === f ? "text-white/70" : "text-muted"}>{count(f)}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="grid grid-flow-row-dense auto-rows-[9rem] grid-cols-2 gap-2 sm:auto-rows-[11rem] sm:gap-3 md:grid-cols-4">
+        {visible.map((p, i) => (
+          <button
+            key={p.id}
             type="button"
             onClick={() => open(i)}
             className={`group relative overflow-hidden rounded-xl bg-stone focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-sea ${
@@ -51,8 +83,8 @@ export function Gallery({ photos, t }: { photos: PhotoId[]; t: Labels }) {
             }`}
           >
             <Image
-              src={photoSrc(id)}
-              alt={t.alts[id]}
+              src={gallerySrc(p.id)}
+              alt={t.subjects[p.subject]}
               fill
               sizes={big(i) ? "(min-width: 768px) 50vw, 100vw" : "(min-width: 768px) 25vw, 50vw"}
               className="object-cover transition duration-500 group-hover:scale-105"
@@ -61,14 +93,29 @@ export function Gallery({ photos, t }: { photos: PhotoId[]; t: Labels }) {
         ))}
       </div>
 
+      {list.length > PREVIEW && (
+        <div className="mt-8 text-center">
+          <button
+            type="button"
+            onClick={() => {
+              if (expanded) rootRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+              setExpanded((e) => !e);
+            }}
+            className="rounded-xl border border-ink px-6 py-3 font-semibold transition hover:bg-ink/5"
+          >
+            {expanded ? t.showLess : t.showAll.replace("{n}", String(list.length))}
+          </button>
+        </div>
+      )}
+
       <dialog
         ref={dialogRef}
         onClose={() => setIndex(null)}
         onClick={(e) => e.target === e.currentTarget && close()}
         className="m-0 h-dvh max-h-none w-screen max-w-none bg-black/95 p-0 text-white backdrop:bg-black/80"
-        aria-label={index !== null ? t.alts[photos[index]] : undefined}
+        aria-label={index !== null ? alt(index) : undefined}
       >
-        {index !== null && (
+        {current && index !== null && (
           <div
             className="relative flex h-full w-full items-center justify-center"
             onTouchStart={(e) => (touchX.current = e.touches[0].clientX)}
@@ -80,16 +127,16 @@ export function Gallery({ photos, t }: { photos: PhotoId[]; t: Labels }) {
             }}
           >
             <Image
-              key={photos[index]}
-              src={photoSrc(photos[index])}
-              alt={t.alts[photos[index]]}
-              width={PHOTO_W}
-              height={PHOTO_H}
+              key={current.id}
+              src={gallerySrc(current.id)}
+              alt={alt(index)}
+              width={current.w}
+              height={current.h}
               sizes="100vw"
               className="max-h-[85dvh] w-auto max-w-full object-contain"
             />
             <p className="absolute inset-x-0 bottom-4 px-16 text-center text-sm text-white/80">
-              {t.alts[photos[index]]} · {index + 1} {t.of} {photos.length}
+              {alt(index)} · {index + 1} {t.of} {list.length}
             </p>
             <button
               type="button"
@@ -118,6 +165,6 @@ export function Gallery({ photos, t }: { photos: PhotoId[]; t: Labels }) {
           </div>
         )}
       </dialog>
-    </>
+    </div>
   );
 }
