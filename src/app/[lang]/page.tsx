@@ -118,11 +118,16 @@ function JsonLd({ t, lang }: { t: Dict; lang: Locale }) {
   const data = {
     "@context": "https://schema.org",
     "@type": "VacationRental",
+    "@id": `${site.url}/#villa`,
+    identifier: "villa-gemini-selca",
     name: site.name,
     description: t.meta.description,
     url: `${site.url}/${lang}`,
     image: [`${site.url}${heroSrc}`, ...photos.slice(0, 5).map((p) => `${site.url}${gallerySrc(p.id)}`)],
     telephone: site.phone,
+    email: site.email,
+    // Same property on the booking platforms: helps Google connect them to this site.
+    sameAs: [site.links.vrbo, site.links.airbnb],
     inLanguage: localeTag[lang],
     address: {
       "@type": "PostalAddress",

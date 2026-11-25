@@ -56,9 +56,19 @@ export const site = {
     },
   },
   gaId: process.env.NEXT_PUBLIC_GA_ID ?? "",
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION ?? "",
+    bing: process.env.BING_SITE_VERIFICATION ?? "",
+  },
 } as const;
 
 // Hero photo (top of the page and social previews). Gallery photos live in src/lib/photos.ts.
 export const heroSrc = "/photos/pool-dusk-house.webp";
 export const HERO_W = 2144;
 export const HERO_H = 992;
+
+// Link previews (WhatsApp, Facebook, Viber…): 1200×630 JPG crop of the hero, small enough for
+// every app. Regenerate if the hero changes.
+export const ogImageSrc = "/og-image.jpg";
+export const OG_W = 1200;
+export const OG_H = 630;

@@ -9,7 +9,12 @@ import { Footer } from "@/components/site/sections";
 export async function generateMetadata({ params }: PageProps<"/[lang]/privacy">): Promise<Metadata> {
   const { lang } = await params;
   if (!hasLocale(lang)) return {};
-  return { title: getDict(lang).privacyPage.title, alternates: { canonical: `/${lang}/privacy` } };
+  return {
+    title: getDict(lang).privacyPage.title,
+    alternates: { canonical: `/${lang}/privacy` },
+    // Legal boilerplate in 8 languages: keep it out of search results.
+    robots: { index: false, follow: true },
+  };
 }
 
 export default async function PrivacyPage({ params }: PageProps<"/[lang]/privacy">) {
