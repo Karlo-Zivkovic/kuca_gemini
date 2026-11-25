@@ -153,6 +153,12 @@ function JsonLd({ t, lang }: { t: Dict; lang: Locale }) {
       occupancy: { "@type": "QuantitativeValue", value: site.maxGuests },
       numberOfBedrooms: site.bedrooms,
       numberOfBathroomsTotal: site.bathrooms,
+      // Matches "Sleeping arrangements" in the dictionaries (140 and 120 cm beds count as double).
+      bed: [
+        { "@type": "BedDetails", numberOfBeds: 3, typeOfBed: "King" },
+        { "@type": "BedDetails", numberOfBeds: 2, typeOfBed: "Double" },
+        { "@type": "BedDetails", numberOfBeds: 5, typeOfBed: "Single" },
+      ],
       petsAllowed: true,
       // Names from Google's vacation rental list (English only).
       amenityFeature: [
