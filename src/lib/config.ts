@@ -10,8 +10,8 @@ export const site = {
     island: "Brač",
     country: "HR",
   },
-  // Approximate — verify against the Google Business Profile pin.
-  geo: { lat: 43.2969, lng: 16.8497 },
+  // House pin from Google Maps (Google wants 5+ decimals in the structured data).
+  geo: { lat: 43.297964, lng: 16.850454 },
   phone: "+385915276232",
   phoneDisplay: "+385 91 527 6232",
   whatsapp: "385915276232", // international format, digits only (wa.me)

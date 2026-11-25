@@ -123,7 +123,14 @@ function JsonLd({ t, lang }: { t: Dict; lang: Locale }) {
     name: site.name,
     description: t.meta.description,
     url: `${site.url}/${lang}`,
-    image: [`${site.url}${heroSrc}`, ...photos.slice(0, 5).map((p) => `${site.url}${gallerySrc(p.id)}`)],
+    additionalType: "Villa",
+    // Google wants 8+ photos including a bedroom, a bathroom and a common area.
+    image: [
+      heroSrc,
+      ...[...new Set([...photos.slice(0, 10), photos.find((p) => p.subject === "bathroom")])]
+        .filter((p) => p !== undefined)
+        .map((p) => gallerySrc(p.id)),
+    ].map((src) => `${site.url}${src}`),
     telephone: site.phone,
     email: site.email,
     // Same property on the booking platforms: helps Google connect them to this site.
@@ -146,13 +153,15 @@ function JsonLd({ t, lang }: { t: Dict; lang: Locale }) {
       occupancy: { "@type": "QuantitativeValue", value: site.maxGuests },
       numberOfBedrooms: site.bedrooms,
       numberOfBathroomsTotal: site.bathrooms,
+      petsAllowed: true,
+      // Names from Google's vacation rental list (English only).
       amenityFeature: [
-        { "@type": "LocationFeatureSpecification", name: "privatePool", value: true },
-        { "@type": "LocationFeatureSpecification", name: "hotTub", value: true },
-        { "@type": "LocationFeatureSpecification", name: "freeParking", value: true },
-        { "@type": "LocationFeatureSpecification", name: "airConditioning", value: true },
-        { "@type": "LocationFeatureSpecification", name: "wifi", value: true },
-        { "@type": "LocationFeatureSpecification", name: "petsAllowed", value: true },
+        ...["pool", "hotTub", "ac", "wifi", "kitchen", "fireplace", "outdoorGrill", "patio", "balcony", "childFriendly"].map(
+          (name) => ({ "@type": "LocationFeatureSpecification", name, value: true }),
+        ),
+        { "@type": "LocationFeatureSpecification", name: "poolType", value: "Outdoor" },
+        { "@type": "LocationFeatureSpecification", name: "parkingType", value: "Free" },
+        { "@type": "LocationFeatureSpecification", name: "internetType", value: "Free" },
       ],
     },
     aggregateRating: {
