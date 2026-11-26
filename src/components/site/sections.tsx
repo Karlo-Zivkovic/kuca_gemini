@@ -11,9 +11,9 @@ import {
   BedDouble,
   BedSingle,
   Blend,
+  Bubbles,
   Blinds,
   BriefcaseMedical,
-  Bubbles,
   CakeSlice,
   CalendarDays,
   Car,
@@ -44,6 +44,7 @@ import {
   Sandwich,
   Shirt,
   ShowerHead,
+  SoapDispenserDroplet,
   Snowflake,
   Soup,
   Sparkles,
@@ -62,7 +63,7 @@ import {
   Utensils,
   UtensilsCrossed,
   WashingMachine,
-  Waves,
+  WavesLadder,
   Wifi,
   type LucideIcon,
 } from "lucide-react";
@@ -138,8 +139,8 @@ export function Facts({ t }: { t: Dict["facts"] }) {
     { icon: Users, value: String(site.maxGuests), label: t.guests },
     { icon: BedDouble, value: String(site.bedrooms), label: t.bedrooms },
     { icon: Bath, value: String(site.bathrooms), label: t.bathrooms },
-    { icon: Waves, value: "", label: t.pool },
-    { icon: Waves, value: "", label: t.hotTub },
+    { icon: WavesLadder, value: "", label: t.pool },
+    { icon: Bubbles, value: "", label: t.hotTub },
     { icon: Trees, value: "500", label: t.garden },
   ];
   return (
@@ -166,8 +167,8 @@ const aboutPhotos = ["078", "051", "066"];
 
 // Icon keys used by `amenities.groups[].items[].icon` in the dictionaries.
 const amenityIcons: Record<string, LucideIcon> = {
-  pool: Waves,
-  hotTub: Bath,
+  pool: WavesLadder,
+  hotTub: Bubbles,
   garden: Fence,
   terrace: Sun,
   bbq: Beef,
@@ -210,7 +211,7 @@ const amenityIcons: Record<string, LucideIcon> = {
   drying: Wind,
   iron: Shirt,
   hairdryer: Wind,
-  toiletries: Bubbles,
+  toiletries: SoapDispenserDroplet,
   hotWater: ThermometerSun,
   heating: Heater,
   ethernet: EthernetPort,
