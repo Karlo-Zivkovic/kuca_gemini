@@ -375,6 +375,7 @@ const pl: Dict = {
     phoneHint: "Opcjonalnie. Z numerem kierunkowym kraju, abyśmy mogli odpowiedzieć też na WhatsApp.",
     phonePlaceholder: "+48 512 345 678",
     phoneInvalid: "Wpisz numer z numerem kierunkowym kraju, np. +48 512 345 678.",
+    emailInvalid: "Sprawdź adres e-mail, np. imie@przyklad.pl.",
     arrival: "Przyjazd",
     departure: "Wyjazd",
     adults: "Dorośli",

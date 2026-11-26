@@ -375,6 +375,7 @@ const sv: Dict = {
     phoneHint: "Valfritt. Med landsnummer, så att vi även kan svara på WhatsApp.",
     phonePlaceholder: "+46 70 123 45 67",
     phoneInvalid: "Ange numret med landsnummer, t.ex. +46 70 123 45 67.",
+    emailInvalid: "Kontrollera din e-postadress, t.ex. namn@exempel.se.",
     arrival: "Ankomst",
     departure: "Avresa",
     adults: "Vuxna",

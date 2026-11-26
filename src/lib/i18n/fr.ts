@@ -375,6 +375,7 @@ const fr: Dict = {
     phoneHint: "Facultatif. Avec l'indicatif du pays, pour que nous puissions aussi répondre sur WhatsApp.",
     phonePlaceholder: "+33 6 12 34 56 78",
     phoneInvalid: "Saisissez le numéro avec l'indicatif du pays, par ex. +33 6 12 34 56 78.",
+    emailInvalid: "Vérifiez votre adresse e-mail, par ex. nom@exemple.fr.",
     arrival: "Arrivée",
     departure: "Départ",
     adults: "Adultes",

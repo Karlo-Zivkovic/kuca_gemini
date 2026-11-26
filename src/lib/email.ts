@@ -102,18 +102,27 @@ export async function sendInquiryEmail(q: Inquiry): Promise<boolean> {
     return process.env.NODE_ENV !== "production";
   }
 
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      from,
-      to: to.split(",").map((s) => s.trim()),
-      reply_to: q.email,
-      subject,
-      html,
-      headers: { "Content-Language": "hr" }, // tells Gmail it's Croatian, so it doesn't offer a translation
-    }),
-  });
+  const send = (replyTo?: string) =>
+    fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from,
+        to: to.split(",").map((s) => s.trim()),
+        ...(replyTo ? { reply_to: replyTo } : {}),
+        subject,
+        html,
+        headers: { "Content-Language": "hr" }, // tells Gmail it's Croatian, so it doesn't offer a translation
+      }),
+    });
+
+  let res = await send(q.email);
+  if (res.status === 422) {
+    // Resend refused something, most likely the guest's address as Reply-To. Never lose the
+    // inquiry over that: send it again without Reply-To (the address is still in the email).
+    console.error("[inquiry] Resend 422, retrying without reply_to", await res.text());
+    res = await send();
+  }
   if (!res.ok) {
     console.error("[inquiry] Resend failed", res.status, await res.text());
     return false;

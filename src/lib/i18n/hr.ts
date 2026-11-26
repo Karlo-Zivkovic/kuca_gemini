@@ -376,6 +376,7 @@ const hr: Dict = {
     phoneHint: "Nije obavezno. S pozivnim brojem države, da vam možemo odgovoriti i na WhatsApp.",
     phonePlaceholder: "+385 91 234 5678",
     phoneInvalid: "Upišite broj s pozivnim brojem države, npr. +385 91 234 5678.",
+    emailInvalid: "Provjerite e-mail adresu, npr. ime@primjer.hr.",
     arrival: "Dolazak",
     departure: "Odlazak",
     adults: "Odrasli",

@@ -376,6 +376,7 @@ const no: Dict = {
     phoneHint: "Valgfritt. Med landskode, så vi også kan svare på WhatsApp.",
     phonePlaceholder: "+47 412 34 567",
     phoneInvalid: "Skriv nummeret med landskode, f.eks. +47 412 34 567.",
+    emailInvalid: "Sjekk e-postadressen din, f.eks. navn@eksempel.no.",
     arrival: "Ankomst",
     departure: "Avreise",
     adults: "Voksne",

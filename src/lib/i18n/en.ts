@@ -376,6 +376,7 @@ const en = {
     phoneHint: "Optional. Include the country code so we can also reply on WhatsApp.",
     phonePlaceholder: "+44 7911 123456",
     phoneInvalid: "Please enter the number with the country code, e.g. +44 7911 123456.",
+    emailInvalid: "Please check your email address, e.g. name@example.com.",
     arrival: "Arrival",
     departure: "Departure",
     adults: "Adults",

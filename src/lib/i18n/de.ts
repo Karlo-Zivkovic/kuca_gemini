@@ -376,6 +376,7 @@ const de: Dict = {
     phoneHint: "Optional. Mit Ländervorwahl, damit wir auch per WhatsApp antworten können.",
     phonePlaceholder: "+49 170 1234567",
     phoneInvalid: "Bitte geben Sie die Nummer mit Ländervorwahl ein, z. B. +49 170 1234567.",
+    emailInvalid: "Bitte überprüfen Sie Ihre E-Mail-Adresse, z. B. name@beispiel.at.",
     arrival: "Anreise",
     departure: "Abreise",
     adults: "Erwachsene",

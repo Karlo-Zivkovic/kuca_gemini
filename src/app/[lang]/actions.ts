@@ -10,6 +10,14 @@ export type InquiryState = {
   fields?: string[];
 };
 
+/**
+ * Stricter than "has an @ and a dot": the email service rejects addresses like
+ * "name.@gmail.com" (a phone keyboard's stray dot), which used to lose the whole inquiry.
+ */
+const ATOM = "[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+";
+const EMAIL = new RegExp(`^${ATOM}(\\.${ATOM})*@([A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?\\.)+[A-Za-z]{2,}$`);
+const isValidEmail = (s: string) => s.length <= 254 && EMAIL.test(s);
+
 const str = (fd: FormData, key: string, max = 200) => String(fd.get(key) ?? "").trim().slice(0, max);
 const int = (fd: FormData, key: string, min: number, max: number) => {
   const n = Number(fd.get(key));
@@ -45,7 +53,7 @@ export async function sendInquiry(_prev: InquiryState, fd: FormData): Promise<In
 
   const bad: string[] = [];
   if (q.name.length < 2) bad.push("name");
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(q.email)) bad.push("email");
+  if (!isValidEmail(q.email)) bad.push("email");
   if (!phoneOk) bad.push("phone");
   if (q.arrival && !isIsoDate(q.arrival)) bad.push("arrival");
   if (q.departure && (!isIsoDate(q.departure) || q.departure <= q.arrival)) bad.push("departure");

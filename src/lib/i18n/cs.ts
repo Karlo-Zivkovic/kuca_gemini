@@ -375,6 +375,7 @@ const cs: Dict = {
     phoneHint: "Nepovinné. S předvolbou země, abychom vám mohli odpovědět i na WhatsApp.",
     phonePlaceholder: "+420 601 234 567",
     phoneInvalid: "Zadejte číslo s předvolbou země, např. +420 601 234 567.",
+    emailInvalid: "Zkontrolujte svou e-mailovou adresu, např. jmeno@priklad.cz.",
     arrival: "Příjezd",
     departure: "Odjezd",
     adults: "Dospělí",

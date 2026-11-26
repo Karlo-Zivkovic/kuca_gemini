@@ -97,7 +97,7 @@ function InquiryForm({ t, lang, onSent }: { t: Dict; lang: Locale; onSent: () =>
         <Field label={c.name} className="sm:col-span-2">
           <input name="name" required autoComplete="name" className={input} aria-invalid={invalid("name")} />
         </Field>
-        <Field label={c.email}>
+        <Field label={c.email} error={invalid("email") ? c.emailInvalid : undefined}>
           <input name="email" type="email" required autoComplete="email" className={input} aria-invalid={invalid("email")} />
         </Field>
         <Field label={c.phone} hint={invalid("phone") ? undefined : c.phoneHint} error={invalid("phone") ? c.phoneInvalid : undefined}>
