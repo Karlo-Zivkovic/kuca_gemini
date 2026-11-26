@@ -294,7 +294,7 @@ export function About({ t }: { t: Dict }) {
         </ul>
       </div>
 
-      <FloorPlan t={t.floorPlan} />
+      <FloorPlan t={t.floorPlan} g={t.gallery} />
 
       <div className="mt-14">
         <h3 className="mb-8 font-serif text-3xl font-semibold">{t.amenities.title}</h3>

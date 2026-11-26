@@ -65,6 +65,8 @@ const de: Dict = {
     title: "Grundriss",
     zoom: "Grundriss vergrößern",
     close: "Schließen",
+    photosHint: "Tippen Sie auf einen Raum mit Kamerasymbol, um Fotos davon zu sehen.",
+    showPhotos: "Fotos: {room}",
     ground: "Erdgeschoss",
     gallery: "Galerie",
     wcOut: "Außen-WC",

@@ -65,6 +65,8 @@ const fr: Dict = {
     title: "Plan",
     zoom: "Agrandir le plan",
     close: "Fermer",
+    photosHint: "Touchez une pièce avec une icône d'appareil photo pour en voir les photos.",
+    showPhotos: "Photos : {room}",
     ground: "Rez-de-chaussée",
     gallery: "Mezzanine",
     wcOut: "WC extérieur",

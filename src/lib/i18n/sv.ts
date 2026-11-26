@@ -65,6 +65,8 @@ const sv: Dict = {
     title: "Planlösning",
     zoom: "Förstora planlösningen",
     close: "Stäng",
+    photosHint: "Tryck på ett rum med kameraikon för att se bilder därifrån.",
+    showPhotos: "Bilder: {room}",
     ground: "Bottenvåning",
     gallery: "Loft",
     wcOut: "WC utomhus",

@@ -65,6 +65,8 @@ const en = {
     title: "Floor plan",
     zoom: "Enlarge floor plan",
     close: "Close",
+    photosHint: "Tap a room with a camera icon to see its photos.",
+    showPhotos: "Photos: {room}",
     ground: "Ground floor",
     gallery: "Loft",
     wcOut: "Outdoor WC",

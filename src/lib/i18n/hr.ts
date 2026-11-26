@@ -65,6 +65,8 @@ const hr: Dict = {
     title: "Tlocrt",
     zoom: "Uvećaj tlocrt",
     close: "Zatvori",
+    photosHint: "Dodirnite prostoriju s ikonom kamere za njezine fotografije.",
+    showPhotos: "Fotografije: {room}",
     ground: "Prizemlje",
     gallery: "Galerija",
     wcOut: "Vanjski WC",

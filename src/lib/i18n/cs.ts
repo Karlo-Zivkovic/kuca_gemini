@@ -65,6 +65,8 @@ const cs: Dict = {
     title: "Půdorys",
     zoom: "Zvětšit půdorys",
     close: "Zavřít",
+    photosHint: "Klepněte na místnost s ikonou fotoaparátu a zobrazí se její fotky.",
+    showPhotos: "Fotky: {room}",
     ground: "Přízemí",
     gallery: "Podkroví",
     wcOut: "Venkovní WC",

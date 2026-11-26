@@ -1,8 +1,11 @@
 "use client";
 
 import { createContext, useContext, useRef, useState, type ReactNode } from "react";
-import { Maximize2, X } from "lucide-react";
+import { Camera, Maximize2, X } from "lucide-react";
 import type { Dict } from "@/lib/i18n";
+import { photoById, type Photo } from "@/lib/photos";
+import { roomPhotos, type RoomId } from "@/lib/room-photos";
+import { PhotoViewer } from "./photo-viewer";
 
 /*
  * Schematic floor plans drawn from the owners' hand sketches.
@@ -202,12 +205,102 @@ function Svg({ viewBox, label, children }: { viewBox: string; label: string; chi
   return (
     <svg
       viewBox={viewBox}
-      role="img"
+      // "group", not "img": an image hides everything inside it, including the clickable rooms.
+      role="group"
       aria-label={label}
       className={full ? "block h-full w-full" : "mx-auto block h-auto w-full max-w-4xl"}
     >
       {children}
     </svg>
+  );
+}
+
+/* ------------------------------ room photos ------------------------------ */
+
+type Floor = "ground" | "floor1" | "gallery";
+/** A clickable part of the plan: its outline (same coordinates as the walls) and where the camera badge sits. */
+type Spot = { id: RoomId; d: string; badge: P; name: (t: Labels) => string };
+const rect = (x: number, y: number, w: number, h: number) => `M${x} ${y} h${w} v${h} h${-w} Z`;
+const room = (n: number) => (t: Labels) => `${t.room} ${n}`;
+
+const spots: Record<Floor, Spot[]> = {
+  ground: [
+    { id: "room1", d: rect(2, 14, 37, 31), badge: [35, 18], name: room(1) },
+    { id: "groundBathTop", d: rect(39, 14, 37, 18), badge: [57, 29], name: (t) => t.wc },
+    { id: "room4", d: rect(76, 14, 39, 27), badge: [110, 19], name: room(4) },
+    { id: "room2", d: rect(2, 45, 57, 22), badge: [40, 61.5], name: room(2) },
+    { id: "groundBathLeft", d: rect(2, 67, 41, 18), badge: [35, 80], name: (t) => t.wc },
+    { id: "room3", d: rect(2, 85, 46, 29), badge: [33, 111], name: room(3) },
+    { id: "groundHall", d: "M39 32 H76 V70 H48 V85 H43 V67 H59 V45 H39 Z", badge: [52, 43], name: (t) => t.hall },
+    { id: "groundKitchen", d: rect(76, 41, 39, 29), badge: [111, 67], name: (t) => t.kitchen },
+    { id: "groundLiving", d: rect(48, 70, 67, 44), badge: [70, 97.5], name: (t) => t.living },
+    { id: "outdoorWc", d: rect(75, 3, 27, 11), badge: [98, 6.5], name: (t) => t.wcOut },
+    { id: "bbq", d: rect(102, 2, 52, 12), badge: [119, 8], name: (t) => t.bbq },
+    { id: "coveredTerrace", d: rect(115, 14, 39, 100), badge: [137, 50], name: (t) => t.coveredTerrace },
+  ],
+  floor1: [
+    { id: "room5", d: rect(2, 1, 45, 33), badge: [32, 8.5], name: room(5) },
+    { id: "floor1BathLeft", d: rect(2, 34, 45, 11), badge: [43, 40], name: (t) => t.wc },
+    { id: "floor1BathTop", d: rect(47, 1, 27, 21), badge: [58, 15], name: (t) => t.wc },
+    { id: "room6", d: rect(74, 1, 51, 33), badge: [99, 30], name: room(6) },
+    { id: "floor1Hall", d: "M47 22 H74 V34 H78 V55 H2 V45 H47 Z", badge: [58, 45.5], name: (t) => t.hall },
+    { id: "floor1Kitchen", d: rect(78, 34, 47, 26), badge: [100, 50.5], name: (t) => t.kitchen },
+    { id: "floor1Living", d: "M2 55 H78 V89 H2 Z", badge: [58, 82], name: (t) => t.living },
+    { id: "dining", d: rect(78, 60, 37, 29), badge: [100, 64], name: (t) => t.dining },
+    { id: "terrace", d: rect(125, 4, 47, 85), badge: [148.5, 77], name: (t) => t.terrace },
+    { id: "balcony", d: rect(2, 89, 170, 14), badge: [64, 100], name: (t) => t.balcony },
+  ],
+  gallery: [
+    { id: "room7", d: rect(14, 2, 66, 56), badge: [47, 41], name: room(7) },
+    { id: "room8", d: rect(80, 2, 68, 42), badge: [105, 29], name: room(8) },
+    { id: "loftHall", d: rect(80, 44, 68, 14), badge: [88, 51], name: (t) => t.hall },
+    { id: "loftBalcony", d: rect(0, 28, 14, 30), badge: [7, 33], name: (t) => t.balcony },
+  ],
+};
+
+const photosOf = (id: RoomId) => (roomPhotos[id] ?? []).map(photoById).filter(Boolean);
+const anyRoomPhotos = Object.values(roomPhotos).some((ids) => ids && ids.length > 0);
+
+/** Opens a room's photos; set by the wrapper around all floors. */
+const RoomPhotos = createContext<((title: string, list: Photo[]) => void) | null>(null);
+
+/** Invisible click areas over the rooms that have photos, each with a small camera badge. */
+function Spots({ floor, t }: { floor: Floor; t: Labels }) {
+  const openRoom = useContext(RoomPhotos);
+  const full = useContext(FullScreen);
+  return (
+    <>
+      {spots[floor].map((s) => {
+        const list = photosOf(s.id);
+        if (!list.length || !openRoom) return null;
+        const title = `${s.name(t)} · ${t[floor]}`;
+        const open = (e: { stopPropagation: () => void }) => {
+          // Small plan on a phone: let the tap open the big sideways view first (rooms are tiny here).
+          if (!full && window.matchMedia("(max-width: 639px)").matches) return;
+          e.stopPropagation();
+          openRoom(title, list);
+        };
+        return (
+          <g
+            key={s.id}
+            role="button"
+            tabIndex={0}
+            aria-label={t.showPhotos.replace("{room}", title)}
+            onClick={open}
+            onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), open(e))}
+            className="group cursor-pointer outline-none"
+          >
+            <path
+              d={s.d}
+              className="fill-transparent stroke-transparent transition group-hover:fill-sea/10 group-hover:stroke-sea group-focus-visible:fill-sea/10 group-focus-visible:stroke-sea"
+              strokeWidth={0.6}
+            />
+            <circle cx={s.badge[0]} cy={s.badge[1]} r={2.4} className="fill-sea transition group-hover:fill-terracotta" />
+            <Camera x={s.badge[0] - 1.35} y={s.badge[1] - 1.35} width={2.7} height={2.7} className="text-white" strokeWidth={2.4} />
+          </g>
+        );
+      })}
+    </>
   );
 }
 
@@ -370,6 +463,7 @@ function GroundFloor({ t }: { t: Labels }) {
       <Label x={137} y={15.5} small>{t.bbq}</Label>
       <Label x={137} y={45}>{t.coveredTerrace}</Label>
       <Label x={63} y={118.5} accent>{`${t.entrance} ↑`}</Label>
+      <Spots floor="ground" t={t} />
     </Svg>
   );
 }
@@ -521,6 +615,7 @@ function FirstFloor({ t }: { t: Labels }) {
       <Label x={64} y={96.5}>{t.balcony}</Label>
       <Label x={-3} y={50} small rotate={-90} accent>{`${t.entrance} ↓`}</Label>
       <Label x={185} y={55} small rotate={90}>{`${t.stairs} ↓`}</Label>
+      <Spots floor="floor1" t={t} />
     </Svg>
   );
 }
@@ -588,16 +683,24 @@ function Gallery({ t }: { t: Labels }) {
       <Label x={100} y={51}>{t.hall}</Label>
       <Label x={123} y={51} small accent>{t.toFloor1}</Label>
       <Label x={7} y={43} small rotate={-90}>{t.balcony}</Label>
+      <Spots floor="gallery" t={t} />
     </Svg>
   );
 }
 
 /* --------------------------------- wrapper -------------------------------- */
 
-const floors = ["ground", "floor1", "gallery"] as const;
+const floors: Floor[] = ["ground", "floor1", "gallery"];
 
-export function FloorPlan({ t }: { t: Labels }) {
-  const [floor, setFloor] = useState<(typeof floors)[number]>("ground");
+export function FloorPlan({ t, g }: { t: Labels; g: Dict["gallery"] }) {
+  const [floor, setFloor] = useState<Floor>("ground");
+  // The room whose photos are open in the viewer.
+  const [shown, setShown] = useState<{ title: string; list: Photo[] }>({ title: "", list: [] });
+  const [index, setIndex] = useState<number | null>(null);
+  const openRoom = (title: string, list: Photo[]) => {
+    setShown({ title, list });
+    setIndex(0);
+  };
   const dialogRef = useRef<HTMLDialogElement>(null);
   const plan =
     floor === "ground" ? <GroundFloor t={t} /> : floor === "floor1" ? <FirstFloor t={t} /> : <Gallery t={t} />;
@@ -606,6 +709,7 @@ export function FloorPlan({ t }: { t: Labels }) {
     if (window.matchMedia("(max-width: 639px)").matches) dialogRef.current?.showModal();
   };
   return (
+    <RoomPhotos value={openRoom}>
     <figure id="floor-plan" className="mt-14 scroll-mt-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h3 className="font-serif text-3xl font-semibold">{t.title}</h3>
@@ -636,7 +740,10 @@ export function FloorPlan({ t }: { t: Labels }) {
       >
         <Maximize2 className="size-4" /> {t.zoom}
       </button>
-      <figcaption className="mt-3 text-sm text-muted">{t.note}</figcaption>
+      <figcaption className="mt-3 text-sm text-muted">
+        {anyRoomPhotos && <span className="block font-medium text-ink">{t.photosHint}</span>}
+        {t.note}
+      </figcaption>
 
       <dialog
         ref={dialogRef}
@@ -656,6 +763,8 @@ export function FloorPlan({ t }: { t: Labels }) {
           <X className="size-6" />
         </button>
       </dialog>
+      <PhotoViewer list={shown.list} index={index} onIndex={setIndex} caption={() => shown.title} t={g} />
     </figure>
+    </RoomPhotos>
   );
 }

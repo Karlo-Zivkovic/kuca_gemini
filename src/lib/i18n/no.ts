@@ -66,6 +66,8 @@ const no: Dict = {
     title: "Planløsning",
     zoom: "Forstørr planløsningen",
     close: "Lukk",
+    photosHint: "Trykk på et rom med kameraikon for å se bilder av det.",
+    showPhotos: "Bilder: {room}",
     ground: "1. etasje",
     gallery: "Hems",
     wcOut: "Utendørs WC",

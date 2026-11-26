@@ -51,7 +51,6 @@ export type Photo = { id: string; w: number; h: number; subject: PhotoSubject };
 
 export const photos: Photo[] = [
   { id: "041", w: 1920, h: 888, subject: "pool" },
-  { id: "010", w: 1920, h: 888, subject: "living" },
   { id: "046", w: 1920, h: 879, subject: "terrace" },
   { id: "055", w: 1920, h: 888, subject: "hotTub" },
   { id: "006", w: 1920, h: 888, subject: "bedroomTwin" },
@@ -107,7 +106,6 @@ export const photos: Photo[] = [
   { id: "028", w: 1920, h: 879, subject: "dining" },
   { id: "039", w: 1920, h: 879, subject: "dining" },
   { id: "071", w: 1920, h: 888, subject: "dining" },
-  { id: "072", w: 1920, h: 879, subject: "kitchen" },
   { id: "096", w: 1920, h: 1258, subject: "living" },
   { id: "097", w: 861, h: 1306, subject: "hall" },
   { id: "098", w: 1920, h: 1286, subject: "kitchen" },
@@ -137,7 +135,6 @@ export const photos: Photo[] = [
   { id: "036", w: 1920, h: 888, subject: "bedroomDouble" },
   { id: "040", w: 1920, h: 888, subject: "bedroomDouble" },
   { id: "044", w: 1920, h: 879, subject: "bedroomDouble" },
-  { id: "045", w: 1920, h: 888, subject: "bedroomDouble" },
   { id: "047", w: 824, h: 1800, subject: "bedroomSingle" },
   { id: "049", w: 1920, h: 888, subject: "bedroomTwin" },
   { id: "059", w: 1920, h: 888, subject: "bedroomTwin" },
@@ -145,7 +142,6 @@ export const photos: Photo[] = [
   { id: "084", w: 1920, h: 888, subject: "bedroomDouble" },
   { id: "087", w: 1920, h: 888, subject: "bedroomTwin" },
   { id: "090", w: 1920, h: 879, subject: "bedroomDouble" },
-  { id: "004", w: 824, h: 1800, subject: "bathroom" },
   { id: "005", w: 1920, h: 888, subject: "bathroom" },
   { id: "008", w: 824, h: 1800, subject: "bathroom" },
   { id: "012", w: 1920, h: 888, subject: "bathroom" },
