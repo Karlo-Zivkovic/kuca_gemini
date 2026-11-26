@@ -2,7 +2,9 @@
 
 import { parsePhoneNumberFromString } from "libphonenumber-js/max";
 import { sendInquiryEmail } from "@/lib/email";
-import { isIsoDate } from "@/lib/dates";
+import { isIsoDate, nightsBetween } from "@/lib/dates";
+import { site } from "@/lib/config";
+import { getPublicAvailability } from "@/lib/data";
 import { hasLocale } from "@/lib/i18n";
 
 export type InquiryState = {
@@ -55,8 +57,16 @@ export async function sendInquiry(_prev: InquiryState, fd: FormData): Promise<In
   if (q.name.length < 2) bad.push("name");
   if (!isValidEmail(q.email)) bad.push("email");
   if (!phoneOk) bad.push("phone");
-  if (q.arrival && !isIsoDate(q.arrival)) bad.push("arrival");
-  if (q.departure && (!isIsoDate(q.departure) || q.departure <= q.arrival)) bad.push("departure");
+  if (q.arrival || q.departure) {
+    if (!isIsoDate(q.arrival) || !isIsoDate(q.departure)) bad.push("datesIncomplete");
+    else if (
+      // The calendar already prevents this; re-check in case a booking was added while the page was open.
+      q.departure <= q.arrival ||
+      nightsBetween(q.arrival, q.departure) < site.minNights ||
+      (await getPublicAvailability()).some((r) => q.arrival < r.to && r.from < q.departure)
+    )
+      bad.push("dates");
+  }
   if (fd.get("privacy") !== "on") bad.push("privacy");
   if (bad.length) return { status: "invalid", fields: bad };
 

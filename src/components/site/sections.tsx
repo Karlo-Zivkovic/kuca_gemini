@@ -351,12 +351,14 @@ export function Reviews({ t, lang }: { t: Dict["reviews"]; lang: Locale }) {
     <section className="bg-sea-dark py-14 text-white sm:py-18">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         {/* Heading left, overall score right */}
-        <div className="flex flex-col gap-8 sm:flex-row sm:items-end sm:justify-between">
-          <div>
+        {/* The two score cards stay side by side; the heading gives way, so longer
+            translations (German) don't push one card below the other. */}
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+          <div className="lg:min-w-0 lg:flex-1">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#f0b89c]">{t.kicker}</p>
             <h2 className="mt-3 font-serif text-3xl font-semibold sm:text-[2.6rem]">{t.title}</h2>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-3 sm:flex-nowrap lg:shrink-0">
             {ratings.map((r) => (
               <div key={r.name} className="flex items-center gap-4 rounded-2xl bg-white/5 px-5 py-4 ring-1 ring-white/10">
                 <span className="font-serif text-5xl font-semibold leading-none">
@@ -366,7 +368,7 @@ export function Reviews({ t, lang }: { t: Dict["reviews"]; lang: Locale }) {
                   }).format(r.score)}
                   <span className="text-xl text-white/60">/{r.outOf}</span>
                 </span>
-                <span>
+                <span className="max-w-[11rem]">
                   {stars}
                   <span className="mt-1 block text-sm text-white/80">
                     {r.label} {t.on} {r.name}

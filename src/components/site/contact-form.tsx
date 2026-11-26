@@ -9,6 +9,9 @@ import { track } from "@/lib/consent";
 import type { Dict, Locale } from "@/lib/i18n";
 import { useStay } from "./booking-context";
 import { WhatsAppLink } from "./whatsapp";
+import { DatesField } from "./dates-field";
+import type { IsoRange } from "@/lib/calendar";
+import type { DayPrice } from "@/lib/types";
 
 const input =
   "mt-1.5 block w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-base outline-none transition focus:border-sea focus:ring-2 focus:ring-sea/20 aria-[invalid=true]:border-terracotta aria-[invalid=true]:ring-2 aria-[invalid=true]:ring-terracotta/20";
@@ -16,7 +19,9 @@ const input =
 /** How long the thank-you message stays before the empty form comes back. */
 const SUCCESS_MS = 8000;
 
-export function ContactForm({ t, lang }: { t: Dict; lang: Locale }) {
+type Availability = { booked: IsoRange[]; prices: DayPrice[] };
+
+export function ContactForm({ t, lang, booked, prices }: { t: Dict; lang: Locale } & Availability) {
   const { setStay } = useStay();
   const [sent, setSent] = useState(false);
   // Changing the key remounts the form, giving a fresh, empty form and action state.
@@ -51,12 +56,18 @@ export function ContactForm({ t, lang }: { t: Dict; lang: Locale }) {
     );
   }
 
-  return <InquiryForm key={round} t={t} lang={lang} onSent={() => setSent(true)} />;
+  return <InquiryForm key={round} t={t} lang={lang} booked={booked} prices={prices} onSent={() => setSent(true)} />;
 }
 
-function InquiryForm({ t, lang, onSent }: { t: Dict; lang: Locale; onSent: () => void }) {
+function InquiryForm({
+  t,
+  lang,
+  booked,
+  prices,
+  onSent,
+}: { t: Dict; lang: Locale; onSent: () => void } & Availability) {
   const c = t.contact;
-  const { arrival, departure, setStay } = useStay();
+  const { arrival, departure } = useStay();
   const [state, action, pending] = useActionState<InquiryState, FormData>(sendInquiry, { status: "idle" });
   // When the form appeared; the server drops submissions made within 2 s of page load (bots).
   const startedAt = useRef(0);
@@ -111,27 +122,13 @@ function InquiryForm({ t, lang, onSent }: { t: Dict; lang: Locale; onSent: () =>
             aria-invalid={invalid("phone")}
           />
         </Field>
-        <Field label={c.arrival}>
-          <input
-            name="arrival"
-            type="date"
-            value={arrival}
-            onChange={(e) => setStay({ arrival: e.target.value, departure })}
-            className={input}
-            aria-invalid={invalid("arrival")}
-          />
-        </Field>
-        <Field label={c.departure}>
-          <input
-            name="departure"
-            type="date"
-            value={departure}
-            min={arrival || undefined}
-            onChange={(e) => setStay({ arrival, departure: e.target.value })}
-            className={input}
-            aria-invalid={invalid("departure")}
-          />
-        </Field>
+        <DatesField
+          booked={booked}
+          prices={prices}
+          t={t}
+          lang={lang}
+          error={invalid("datesIncomplete") ? c.datesIncomplete : invalid("dates") ? c.datesTaken : undefined}
+        />
         <Field label={c.adults}>
           <input name="adults" type="number" min={1} max={14} defaultValue={2} inputMode="numeric" className={input} />
         </Field>

@@ -91,7 +91,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
               {t.contact.subtitle}
             </SectionHeading>
             <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
-              <ContactForm t={t} lang={lang} />
+              <Inquiry t={t} lang={lang} />
               <DirectContact t={t} />
             </div>
           </div>
@@ -112,6 +112,12 @@ async function Availability({ t, lang }: { t: Dict; lang: Locale }) {
       <Prices t={t} />
     </div>
   );
+}
+
+/** The inquiry form, with the same cached bookings + prices for its dates calendar. */
+async function Inquiry({ t, lang }: { t: Dict; lang: Locale }) {
+  const [booked, prices] = await Promise.all([getPublicAvailability(), getPublicDayPrices()]);
+  return <ContactForm t={t} lang={lang} booked={booked} prices={prices} />;
 }
 
 function JsonLd({ t, lang }: { t: Dict; lang: Locale }) {

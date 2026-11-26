@@ -41,11 +41,14 @@ export function BookingCalendar({
   prices,
   t,
   lang,
+  onDone,
 }: {
   booked: IsoRange[];
   prices: DayPrice[];
   t: Dict["availability"];
   lang: Locale;
+  /** Inside the inquiry form's dialog: the final button confirms the dates instead of jumping to the form. */
+  onDone?: () => void;
 }) {
   const today = useToday();
   const twoMonths = useMediaQuery("(min-width: 768px)");
@@ -248,11 +251,20 @@ export function BookingCalendar({
               {t.clear}
             </button>
           )}
-          {departure && (
-            <a href="#contact" className="rounded-full bg-terracotta px-5 py-2 text-sm font-semibold text-white hover:bg-terracotta-dark">
-              {t.continue}
-            </a>
-          )}
+          {departure &&
+            (onDone ? (
+              <button
+                type="button"
+                onClick={onDone}
+                className="rounded-full bg-terracotta px-5 py-2 text-sm font-semibold text-white hover:bg-terracotta-dark"
+              >
+                {t.useDates}
+              </button>
+            ) : (
+              <a href="#contact" className="rounded-full bg-terracotta px-5 py-2 text-sm font-semibold text-white hover:bg-terracotta-dark">
+                {t.continue}
+              </a>
+            ))}
         </div>
       </div>
     </div>
