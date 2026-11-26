@@ -116,7 +116,15 @@ function InquiryForm({
   };
 
   const [state, action, pending] = useActionState<InquiryState, FormData>(async (prev, fd) => {
-    const result = await sendInquiry(prev, fd);
+    let result: InquiryState;
+    try {
+      result = await sendInquiry(prev, fd);
+    } catch {
+      // No connection, or the site was updated while this page was open (the old page can't reach
+      // the new server). Show the "try again / WhatsApp" message and keep what the guest typed,
+      // instead of crashing the page.
+      return { status: "error" };
+    }
     if (result.status === "invalid") {
       // The server checks more (full phone number, dates still free): show its findings per field too.
       const next: Errors = {};
@@ -162,10 +170,11 @@ function InquiryForm({
       noValidate
     >
       <input type="hidden" name="lang" value={lang} />
-      {/* Honeypot: hidden from people, bots fill it in. */}
+      {/* Honeypot: hidden from people, bots fill it in. Deliberately not called "company" or similar:
+          browser autofill would fill that in for real guests and their inquiry would be dropped. */}
       <div aria-hidden className="absolute -left-[9999px] h-0 overflow-hidden">
         <label>
-          Company <input type="text" name="company" tabIndex={-1} autoComplete="off" />
+          Leave this empty <input type="text" name="vg_hp" tabIndex={-1} autoComplete="off" />
         </label>
       </div>
 

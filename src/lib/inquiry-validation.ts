@@ -9,6 +9,18 @@ const EMAIL = new RegExp(`^${ATOM}(\\.${ATOM})*@([A-Za-z0-9]([A-Za-z0-9-]*[A-Za-
 
 export const isValidEmail = (s: string) => s.length <= 254 && EMAIL.test(s);
 
+/**
+ * Phone as typed → something the number parser understands: full-width characters from some
+ * phone keyboards ("＋４３") become normal ones, and a leading "tel:" or bracket ("(+43) 664…",
+ * copied from other apps) is dropped. "00" stays; callers treat it as "+".
+ */
+export const normalizePhone = (raw: string) =>
+  raw
+    .normalize("NFKC")
+    .trim()
+    .replace(/^tel:\s*/i, "")
+    .replace(/^[(\s]+(?=[+0])/, "");
+
 /** Fields with their own error message, in the order they appear in the form. */
 export const inquiryFields = ["name", "email", "phone", "dates", "privacy"] as const;
 export type InquiryField = (typeof inquiryFields)[number];
@@ -25,7 +37,7 @@ export function checkField(field: InquiryField, form: HTMLFormElement): boolean 
     case "email":
       return isValidEmail(value("email"));
     case "phone": {
-      const phone = value("phone");
+      const phone = normalizePhone(value("phone"));
       return !phone || /^(\+|00)\s*[1-9]/.test(phone);
     }
     case "dates":

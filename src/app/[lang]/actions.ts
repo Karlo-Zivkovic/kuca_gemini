@@ -6,7 +6,7 @@ import { isIsoDate, nightsBetween } from "@/lib/dates";
 import { site } from "@/lib/config";
 import { getPublicAvailability } from "@/lib/data";
 import { hasLocale } from "@/lib/i18n";
-import { isValidEmail } from "@/lib/inquiry-validation";
+import { isValidEmail, normalizePhone } from "@/lib/inquiry-validation";
 
 export type InquiryState = {
   status: "idle" | "success" | "error" | "invalid";
@@ -22,7 +22,7 @@ const int = (fd: FormData, key: string, min: number, max: number) => {
 export async function sendInquiry(_prev: InquiryState, fd: FormData): Promise<InquiryState> {
   // Spam guards: hidden honeypot field, and no human submits within 2 s of page load.
   const startedAt = Number(fd.get("startedAt"));
-  if (str(fd, "company") || !startedAt || Date.now() - startedAt < 2000) {
+  if (str(fd, "vg_hp") || !startedAt || Date.now() - startedAt < 2000) {
     return { status: "success" }; // pretend success so bots don't retry
   }
 
@@ -31,7 +31,7 @@ export async function sendInquiry(_prev: InquiryState, fd: FormData): Promise<In
   // Phone is optional, but if given it must be a real number with its country code (+ or 00),
   // because the owner's "reply on WhatsApp" button dials exactly this number.
   const rawPhone = str(fd, "phone", 40);
-  const parsedPhone = rawPhone ? parsePhoneNumberFromString(rawPhone.replace(/^\s*00/, "+")) : undefined;
+  const parsedPhone = rawPhone ? parsePhoneNumberFromString(normalizePhone(rawPhone).replace(/^00/, "+")) : undefined;
   const phoneOk = !rawPhone || Boolean(parsedPhone?.isValid());
   const q = {
     name: str(fd, "name", 100),
