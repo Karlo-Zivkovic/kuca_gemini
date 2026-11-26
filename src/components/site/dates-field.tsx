@@ -53,6 +53,7 @@ export function DatesField({
       <input type="hidden" name="arrival" value={arrival} />
       <input type="hidden" name="departure" value={departure} />
       <button
+        id="dates-button"
         type="button"
         onClick={() => dialog.current?.showModal()}
         data-invalid={error ? true : undefined}

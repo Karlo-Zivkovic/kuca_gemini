@@ -377,6 +377,8 @@ const fr: Dict = {
     phonePlaceholder: "+33 6 12 34 56 78",
     phoneInvalid: "Saisissez le numéro avec l'indicatif du pays, par ex. +33 6 12 34 56 78.",
     emailInvalid: "Vérifiez votre adresse e-mail, par ex. nom@exemple.fr.",
+    nameRequired: "Veuillez saisir votre nom.",
+    privacyRequired: "Cochez cette case pour que nous puissions répondre à votre demande.",
     dates: "Dates",
     datesPick: "Choisir vos dates",
     datesChange: "Modifier",

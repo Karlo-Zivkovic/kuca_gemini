@@ -10,6 +10,7 @@ import type { Dict, Locale } from "@/lib/i18n";
 import { useStay } from "./booking-context";
 import { WhatsAppLink } from "./whatsapp";
 import { DatesField } from "./dates-field";
+import { checkField, inquiryFields, type InquiryField } from "@/lib/inquiry-validation";
 import type { IsoRange } from "@/lib/calendar";
 import type { DayPrice } from "@/lib/types";
 
@@ -18,6 +19,8 @@ const input =
 
 /** How long the thank-you message stays before the empty form comes back. */
 const SUCCESS_MS = 8000;
+
+type Errors = Partial<Record<InquiryField, string>>;
 
 type Availability = { booked: IsoRange[]; prices: DayPrice[] };
 
@@ -68,7 +71,64 @@ function InquiryForm({
 }: { t: Dict; lang: Locale; onSent: () => void } & Availability) {
   const c = t.contact;
   const { arrival, departure } = useStay();
-  const [state, action, pending] = useActionState<InquiryState, FormData>(sendInquiry, { status: "idle" });
+  const form = useRef<HTMLFormElement>(null);
+  const message: Record<InquiryField, string> = {
+    name: c.nameRequired,
+    email: c.emailInvalid,
+    phone: c.phoneInvalid,
+    dates: c.datesIncomplete,
+    privacy: c.privacyRequired,
+  };
+
+  // One message per field, shown right under it. A dates error remembers which dates it was
+  // about and disappears as soon as the guest picks other dates.
+  const [errors, setErrors] = useState<Errors>({});
+  const stayKey = `${arrival}|${departure}`;
+  const [datesErrorFor, setDatesErrorFor] = useState("");
+  const errorOf = (f: InquiryField) => (f === "dates" && datesErrorFor !== stayKey ? undefined : errors[f]);
+  // The summary next to the button only after a send attempt, not while the guest is still typing.
+  const [triedSend, setTriedSend] = useState(false);
+  const hasErrors = triedSend && inquiryFields.some((f) => errorOf(f));
+
+  const show = (next: Errors) => {
+    setErrors(next);
+    setDatesErrorFor(stayKey);
+    // Bring the first wrong field into view, so nobody has to hunt for it.
+    const first = inquiryFields.find((f) => next[f]);
+    if (!first) return;
+    requestAnimationFrame(() => {
+      const el = first === "dates" ? document.getElementById("dates-button") : (form.current?.elements.namedItem(first) as HTMLElement | null);
+      el?.scrollIntoView({ block: "center", behavior: "smooth" });
+      el?.focus({ preventScroll: true });
+    });
+  };
+
+  type FieldEvent = { currentTarget: { form: HTMLFormElement | null } };
+  /** Leaving a field: say right away if something is wrong with it. */
+  const checkNow = (f: InquiryField, { currentTarget: { form } }: FieldEvent) => {
+    if (!form) return;
+    const ok = checkField(f, form);
+    setErrors((prev) => (Boolean(prev[f]) === !ok ? prev : { ...prev, [f]: ok ? undefined : message[f] }));
+  };
+  /** Typing: only clear an error once it's fixed (no nagging halfway through typing). */
+  const clearWhenFixed = (f: InquiryField, { currentTarget: { form } }: FieldEvent) => {
+    if (errors[f] && form && checkField(f, form)) setErrors((prev) => ({ ...prev, [f]: undefined }));
+  };
+
+  const [state, action, pending] = useActionState<InquiryState, FormData>(async (prev, fd) => {
+    const result = await sendInquiry(prev, fd);
+    if (result.status === "invalid") {
+      // The server checks more (full phone number, dates still free): show its findings per field too.
+      const next: Errors = {};
+      for (const f of result.fields ?? []) {
+        if (f === "dates") next.dates = c.datesTaken;
+        else if (f === "datesIncomplete") next.dates = c.datesIncomplete;
+        else if ((inquiryFields as readonly string[]).includes(f)) next[f as InquiryField] = message[f as InquiryField];
+      }
+      show(next);
+    }
+    return result;
+  }, { status: "idle" });
   // When the form appeared; the server drops submissions made within 2 s of page load (bots).
   const startedAt = useRef(0);
   useEffect(() => {
@@ -82,13 +142,18 @@ function InquiryForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
-  const invalid = (f: string) => (state.status === "invalid" && state.fields?.includes(f) ? true : undefined);
-
   return (
     <form
       // Submit manually so React doesn't reset the fields when validation fails.
+      ref={form}
       onSubmit={(e) => {
         e.preventDefault();
+        setTriedSend(true);
+        // Check everything in the browser first: instant, and points at the exact field.
+        const next: Errors = {};
+        for (const f of inquiryFields) if (!checkField(f, e.currentTarget)) next[f] = message[f];
+        if (Object.keys(next).length) return show(next);
+        setErrors({});
         const fd = new FormData(e.currentTarget);
         fd.set("startedAt", String(startedAt.current));
         startTransition(() => action(fd));
@@ -105,13 +170,30 @@ function InquiryForm({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label={c.name} className="sm:col-span-2">
-          <input name="name" required autoComplete="name" className={input} aria-invalid={invalid("name")} />
+        <Field label={c.name} className="sm:col-span-2" error={errorOf("name")}>
+          <input
+            name="name"
+            required
+            autoComplete="name"
+            className={input}
+            aria-invalid={errorOf("name") ? true : undefined}
+            onBlur={(e) => checkNow("name", e)}
+            onChange={(e) => clearWhenFixed("name", e)}
+          />
         </Field>
-        <Field label={c.email} error={invalid("email") ? c.emailInvalid : undefined}>
-          <input name="email" type="email" required autoComplete="email" className={input} aria-invalid={invalid("email")} />
+        <Field label={c.email} error={errorOf("email")}>
+          <input
+            name="email"
+            type="email"
+            required
+            autoComplete="email"
+            className={input}
+            aria-invalid={errorOf("email") ? true : undefined}
+            onBlur={(e) => checkNow("email", e)}
+            onChange={(e) => clearWhenFixed("email", e)}
+          />
         </Field>
-        <Field label={c.phone} hint={invalid("phone") ? undefined : c.phoneHint} error={invalid("phone") ? c.phoneInvalid : undefined}>
+        <Field label={c.phone} hint={errorOf("phone") ? undefined : c.phoneHint} error={errorOf("phone")}>
           <input
             name="phone"
             type="tel"
@@ -119,7 +201,9 @@ function InquiryForm({
             autoComplete="tel"
             placeholder={c.phonePlaceholder}
             className={input}
-            aria-invalid={invalid("phone")}
+            aria-invalid={errorOf("phone") ? true : undefined}
+            onBlur={(e) => checkNow("phone", e)}
+            onChange={(e) => clearWhenFixed("phone", e)}
           />
         </Field>
         <DatesField
@@ -127,7 +211,7 @@ function InquiryForm({
           prices={prices}
           t={t}
           lang={lang}
-          error={invalid("datesIncomplete") ? c.datesIncomplete : invalid("dates") ? c.datesTaken : undefined}
+          error={errorOf("dates")}
         />
         <Field label={c.adults}>
           <input name="adults" type="number" min={1} max={14} defaultValue={2} inputMode="numeric" className={input} />
@@ -142,20 +226,35 @@ function InquiryForm({
         <Field label={c.message} className="sm:col-span-2">
           <textarea name="message" rows={4} placeholder={c.messagePlaceholder} className={input} />
         </Field>
-        <label className="flex items-start gap-3 text-sm sm:col-span-2">
-          <input name="privacy" type="checkbox" required className="mt-0.5 size-5 shrink-0 accent-sea" aria-invalid={invalid("privacy")} />
-          <span className={invalid("privacy") ? "text-terracotta-dark" : "text-muted"}>
-            {c.privacy}{" "}
-            <Link href={`/${lang}/privacy`} className="underline underline-offset-2" target="_blank">
-              {c.privacyLink}
-            </Link>
-          </span>
-        </label>
+        <div className="sm:col-span-2">
+          <label className="flex items-start gap-3 text-sm">
+            <input
+              name="privacy"
+              type="checkbox"
+              required
+              className="mt-0.5 size-5 shrink-0 accent-sea"
+              aria-invalid={errorOf("privacy") ? true : undefined}
+              aria-describedby={errorOf("privacy") ? "privacy-error" : undefined}
+              onChange={(e) => checkNow("privacy", e)}
+            />
+            <span className={errorOf("privacy") ? "text-terracotta-dark" : "text-muted"}>
+              {c.privacy}{" "}
+              <Link href={`/${lang}/privacy`} className="underline underline-offset-2" target="_blank">
+                {c.privacyLink}
+              </Link>
+            </span>
+          </label>
+          {errorOf("privacy") && (
+            <span id="privacy-error" className="mt-1 ml-8 block text-xs font-medium text-terracotta-dark">
+              {errorOf("privacy")}
+            </span>
+          )}
+        </div>
       </div>
 
-      {(state.status === "invalid" || state.status === "error") && (
+      {(hasErrors || state.status === "error") && (
         <p role="alert" className="mt-4 rounded-xl bg-terracotta/10 px-4 py-3 text-sm font-medium text-terracotta-dark">
-          {state.status === "invalid" ? c.invalid : c.error}
+          {hasErrors ? c.invalid : c.error}
         </p>
       )}
 

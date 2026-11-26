@@ -377,6 +377,8 @@ const pl: Dict = {
     phonePlaceholder: "+48 512 345 678",
     phoneInvalid: "Wpisz numer z numerem kierunkowym kraju, np. +48 512 345 678.",
     emailInvalid: "Sprawdź adres e-mail, np. imie@przyklad.pl.",
+    nameRequired: "Wpisz swoje imię.",
+    privacyRequired: "Zaznacz to pole, abyśmy mogli odpowiedzieć na Twoje zapytanie.",
     dates: "Termin",
     datesPick: "Wybierz termin",
     datesChange: "Zmień",

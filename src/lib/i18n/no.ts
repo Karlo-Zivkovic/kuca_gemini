@@ -378,6 +378,8 @@ const no: Dict = {
     phonePlaceholder: "+47 412 34 567",
     phoneInvalid: "Skriv nummeret med landskode, f.eks. +47 412 34 567.",
     emailInvalid: "Sjekk e-postadressen din, f.eks. navn@eksempel.no.",
+    nameRequired: "Skriv inn navnet ditt.",
+    privacyRequired: "Kryss av her, så vi kan svare på forespørselen din.",
     dates: "Datoer",
     datesPick: "Velg datoer",
     datesChange: "Endre",

@@ -377,6 +377,8 @@ const sv: Dict = {
     phonePlaceholder: "+46 70 123 45 67",
     phoneInvalid: "Ange numret med landsnummer, t.ex. +46 70 123 45 67.",
     emailInvalid: "Kontrollera din e-postadress, t.ex. namn@exempel.se.",
+    nameRequired: "Ange ditt namn.",
+    privacyRequired: "Kryssa i rutan så att vi kan svara på din förfrågan.",
     dates: "Datum",
     datesPick: "Välj datum",
     datesChange: "Ändra",

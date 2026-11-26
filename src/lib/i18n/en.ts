@@ -378,6 +378,8 @@ const en = {
     phonePlaceholder: "+44 7911 123456",
     phoneInvalid: "Please enter the number with the country code, e.g. +44 7911 123456.",
     emailInvalid: "Please check your email address, e.g. name@example.com.",
+    nameRequired: "Please enter your name.",
+    privacyRequired: "Please tick this box so we can reply to your inquiry.",
     dates: "Dates",
     datesPick: "Choose your dates",
     datesChange: "Change",

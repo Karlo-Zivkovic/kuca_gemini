@@ -377,6 +377,8 @@ const cs: Dict = {
     phonePlaceholder: "+420 601 234 567",
     phoneInvalid: "Zadejte číslo s předvolbou země, např. +420 601 234 567.",
     emailInvalid: "Zkontrolujte svou e-mailovou adresu, např. jmeno@priklad.cz.",
+    nameRequired: "Zadejte prosím své jméno.",
+    privacyRequired: "Zaškrtněte prosím toto políčko, abychom mohli na váš dotaz odpovědět.",
     dates: "Termín",
     datesPick: "Vyberte termín",
     datesChange: "Změnit",

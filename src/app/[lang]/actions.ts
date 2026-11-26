@@ -6,19 +6,12 @@ import { isIsoDate, nightsBetween } from "@/lib/dates";
 import { site } from "@/lib/config";
 import { getPublicAvailability } from "@/lib/data";
 import { hasLocale } from "@/lib/i18n";
+import { isValidEmail } from "@/lib/inquiry-validation";
 
 export type InquiryState = {
   status: "idle" | "success" | "error" | "invalid";
   fields?: string[];
 };
-
-/**
- * Stricter than "has an @ and a dot": the email service rejects addresses like
- * "name.@gmail.com" (a phone keyboard's stray dot), which used to lose the whole inquiry.
- */
-const ATOM = "[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+";
-const EMAIL = new RegExp(`^${ATOM}(\\.${ATOM})*@([A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?\\.)+[A-Za-z]{2,}$`);
-const isValidEmail = (s: string) => s.length <= 254 && EMAIL.test(s);
 
 const str = (fd: FormData, key: string, max = 200) => String(fd.get(key) ?? "").trim().slice(0, max);
 const int = (fd: FormData, key: string, min: number, max: number) => {

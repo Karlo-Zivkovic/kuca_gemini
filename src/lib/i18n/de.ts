@@ -378,6 +378,8 @@ const de: Dict = {
     phonePlaceholder: "+49 170 1234567",
     phoneInvalid: "Bitte geben Sie die Nummer mit Ländervorwahl ein, z. B. +49 170 1234567.",
     emailInvalid: "Bitte überprüfen Sie Ihre E-Mail-Adresse, z. B. name@beispiel.at.",
+    nameRequired: "Bitte geben Sie Ihren Namen ein.",
+    privacyRequired: "Bitte setzen Sie hier ein Häkchen, damit wir Ihre Anfrage beantworten können.",
     dates: "Reisedaten",
     datesPick: "Reisedaten auswählen",
     datesChange: "Ändern",
